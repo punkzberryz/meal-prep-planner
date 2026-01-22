@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, format, isWithinInterval } from "date-fns";
+import { addDays, format, isWithinInterval, parse } from "date-fns";
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import type { DayButton } from "react-day-picker";
@@ -31,6 +31,10 @@ function getMealColor(name: string) {
 
 function toDateKey(date: Date) {
 	return format(date, "yyyy-MM-dd");
+}
+
+function fromDateKey(value: string) {
+	return parse(value, "yyyy-MM-dd", new Date());
 }
 
 function CalendarDayButton({
@@ -148,7 +152,7 @@ export function DashboardOverview() {
 		return map;
 	}, [data?.plan?.slots]);
 
-	const selected = selectedDay ? new Date(selectedDay) : undefined;
+	const selected = selectedDay ? fromDateKey(selectedDay) : undefined;
 	const selectedKey = selected ? toDateKey(selected) : null;
 	const selectedMeals = selectedKey ? mealsByDay.get(selectedKey) : undefined;
 

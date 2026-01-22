@@ -47,7 +47,6 @@
    - Enhance the meal calendar to show meal info, not just dates.
 4. Data layer polish
    - Refresh auth cache after login/register so the sidebar updates immediately.
-   - Avoid date-only parsing shifts in the dashboard selected day state.
 
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
@@ -56,6 +55,7 @@
 - Weekly planner (v1): week slots, rotation-based generation, slot edits.
 - Grocery list (v1): aggregated ingredient list with one-click copy.
 - Data fetching + client state simplification: TanStack Query hooks and Zustand stores wired across meals/plans/grocery/auth.
+- Dashboard date selection: parse local date keys to avoid timezone shifts.
 
 ## Open Decisions
 - Ingredient modeling (DECIDED): store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.

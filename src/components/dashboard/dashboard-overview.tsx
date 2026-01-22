@@ -129,15 +129,14 @@ export function DashboardOverview() {
 	}, [data?.weekStart]);
 
 	useEffect(() => {
-		if (!weekStartDate) return;
+		if (!weekStartDate || selectedDay) return;
 		const today = new Date();
 		const isInWeek = isWithinInterval(today, {
 			start: weekStartDate,
 			end: addDays(weekStartDate, 6),
 		});
 		const nextSelected = isInWeek ? today : weekStartDate;
-		const nextKey = toDateKey(nextSelected);
-		if (selectedDay !== nextKey) setSelectedDay(nextKey);
+		setSelectedDay(toDateKey(nextSelected));
 	}, [weekStartDate, selectedDay, setSelectedDay]);
 
 	const mealsByDay = useMemo(() => {

@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -84,6 +85,7 @@ export function QuickEditOverlay({
 		if (!plan) return;
 		setActionError(null);
 		setIsSubmitting(true);
+		let updated = false;
 		try {
 			if (
 				selectedLunchSlot &&
@@ -93,6 +95,7 @@ export function QuickEditOverlay({
 					slotId: selectedLunchSlot.id,
 					mealId: draftLunchId === "" ? null : draftLunchId,
 				});
+				updated = true;
 			}
 			if (
 				selectedDinnerSlot &&
@@ -102,6 +105,10 @@ export function QuickEditOverlay({
 					slotId: selectedDinnerSlot.id,
 					mealId: draftDinnerId === "" ? null : draftDinnerId,
 				});
+				updated = true;
+			}
+			if (updated) {
+				toast.success("Meals updated.");
 			}
 		} catch (err) {
 			setActionError(

@@ -43,3 +43,7 @@ For PRs:
 ## Security & Configuration Notes
 - `.env` is ignored; use `.env.example` for required variables.
 - Required keys: `DATABASE_URL`, `JWT_SECRET`.
+
+## Agent Workflow
+- Always review `docs/RULES.md` at the start of each task.
+- Review `docs/PLANS.md` when work affects roadmap or priorities.

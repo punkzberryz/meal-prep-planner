@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meal Prep Planner
+
+A Next.js app for planning weekly meals with a calendar-driven dashboard, grocery lists, and guided cooking steps. The current focus is the authenticated app shell and core planning workflows.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js (LTS recommended)
+- `pnpm` package manager
 
+### Install
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment
+Create a `.env` file at the repo root:
+```bash
+DATABASE_URL=file:./dev.db
+JWT_SECRET=dev-secret-change-me
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Database
+```bash
+pnpm prisma migrate dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Run the app
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The dashboard lives at `/app`.
+
+## Scripts
+- `pnpm dev` — start the dev server
+- `pnpm build` — create a production build
+- `pnpm start` — run the production server
+- `pnpm lint` — run Biome checks
+- `pnpm format` — auto-format with Biome
+- `pnpm test` — run Vitest tests
+- `pnpm prisma migrate dev` — apply migrations
+- `pnpm prisma studio` — browse the SQLite DB
+
+## Project Structure
+- `src/app/(auth)/` — login and registration pages
+- `src/app/(app)/app/` — authenticated dashboard and app pages
+- `src/app/api/` — auth API routes
+- `src/components/ui/` — shadcn/ui components
+- `src/lib/` — Prisma client + auth helpers
+- `prisma/` — schema and migrations
+- `docs/` — planning notes for AI agents
+
+## Auth Notes
+- JWT is stored in an httpOnly cookie.
+- Sessions are persisted in SQLite via Prisma.
+
+## Next Up
+- Meal CRUD + default meals seeding
+- Weekly plan generation rules
+- Grocery list aggregation
 
 ## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Docs](https://www.prisma.io/docs)
+- [shadcn/ui](https://ui.shadcn.com)

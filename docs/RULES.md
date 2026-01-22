@@ -13,6 +13,8 @@
 - Use Biome for linting and formatting (`pnpm lint`, `pnpm format`).
 - Use Vitest for tests (`pnpm test`, `pnpm test:watch`).
 - Place authenticated routes under `src/app/(app)/app/**` (e.g., `/app`, `/app/meals`).
+- Use Zustand for client-side state management.
+- Use TanStack Query for data fetching and caching.
 
 ## AI Agent Notes
 - Favor small, reversible changes.

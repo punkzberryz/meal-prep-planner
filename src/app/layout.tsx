@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 	title: "Meal Prep Planner",
 	description: "Plan weekly meals, manage groceries, and keep cooking calm.",
 	icons: {
-		icon: "/assets/icons/icon.jpg",
+		icon: "/favicon.ico",
 		shortcut: "/assets/icons/favicon.ico",
 		apple: "/assets/icons/icon.jpg",
 	},

@@ -33,10 +33,7 @@
 
 ## Near-Term Additions
 1. Auth-aware marketing flow (COMPLETED)
-2. App-wide UX scaffolding
-   - Add a not-found page.
-   - Add a global error boundary page.
-   - Add a loading UI page.
+2. App-wide UX scaffolding (COMPLETED)
 3. Dashboard scope (selected)
    - Today’s plan summary (lunch/dinner cards, quick edit).
    - Week snapshot (mini calendar or week grid with meal names).

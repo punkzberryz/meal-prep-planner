@@ -45,8 +45,6 @@
    - Grocery list preview (top items + copy).
    - Upcoming week navigation (prev/next week).
    - Enhance the meal calendar to show meal info, not just dates.
-4. Data layer polish
-   - Refresh auth cache after login/register so the sidebar updates immediately.
 
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
@@ -56,6 +54,7 @@
 - Grocery list (v1): aggregated ingredient list with one-click copy.
 - Data fetching + client state simplification: TanStack Query hooks and Zustand stores wired across meals/plans/grocery/auth.
 - Dashboard date selection: parse local date keys to avoid timezone shifts.
+- Auth cache refresh: update `auth.me` after login/register for immediate sidebar sync.
 
 ## Open Decisions
 - Ingredient modeling (DECIDED): store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.

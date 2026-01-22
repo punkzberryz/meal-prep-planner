@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiJson } from "@/lib/queries/api";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -34,22 +34,36 @@ export function useAuthMe() {
 }
 
 export function useLogin() {
+	const queryClient = useQueryClient();
+
 	return useMutation({
 		mutationFn: (payload: LoginPayload) =>
-			apiJson("/api/auth/login", {
+			apiJson<AuthMeResponse>("/api/auth/login", {
 				method: "POST",
 				body: JSON.stringify(payload),
 			}),
+		onSuccess: (data) => {
+			if (data.user) {
+				queryClient.setQueryData(queryKeys.auth.me, { user: data.user });
+			}
+		},
 	});
 }
 
 export function useRegister() {
+	const queryClient = useQueryClient();
+
 	return useMutation({
 		mutationFn: (payload: RegisterPayload) =>
-			apiJson("/api/auth/register", {
+			apiJson<AuthMeResponse>("/api/auth/register", {
 				method: "POST",
 				body: JSON.stringify(payload),
 			}),
+		onSuccess: (data) => {
+			if (data.user) {
+				queryClient.setQueryData(queryKeys.auth.me, { user: data.user });
+			}
+		},
 	});
 }
 

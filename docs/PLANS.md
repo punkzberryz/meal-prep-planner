@@ -32,9 +32,7 @@
    - Structured recipe steps with timers and servings.
 
 ## Near-Term Additions
-1. Auth-aware marketing flow
-   - Redirect authenticated users away from `/login` and `/register`.
-   - Swap the landing page "Sign in" CTA to "Go to app" when signed in.
+1. Auth-aware marketing flow (COMPLETED)
 2. App-wide UX scaffolding
    - Add a not-found page.
    - Add a global error boundary page.

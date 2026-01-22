@@ -1,7 +1,7 @@
 "use client";
 
 import { addDays, isWithinInterval } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
 	fromDateKey,
 	type MealByDay,
@@ -13,18 +13,12 @@ import { MealCalendarCard } from "@/components/dashboard/meal-calendar-card";
 import { QuickEditOverlay } from "@/components/dashboard/quick-edit-overlay";
 import { SelectedDayCard } from "@/components/dashboard/selected-day-card";
 import { WeekSnapshotCard } from "@/components/dashboard/week-snapshot-card";
-import { type PlanSlot, useUpdateSlot, useWeekPlan } from "@/lib/queries/plans";
+import { type PlanSlot, useWeekPlan } from "@/lib/queries/plans";
 import { usePlannerUiStore } from "@/lib/stores/planner-ui";
 
 export function DashboardOverview() {
 	const { data, isLoading, error } = useWeekPlan();
 	const { selectedDay, setSelectedDay } = usePlannerUiStore();
-	const [dialogOpen, setDialogOpen] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [actionError, setActionError] = useState<string | null>(null);
-	const [draftLunchId, setDraftLunchId] = useState("");
-	const [draftDinnerId, setDraftDinnerId] = useState("");
-	const updateSlot = useUpdateSlot();
 
 	const errorMessage = error
 		? error instanceof Error
@@ -47,13 +41,6 @@ export function DashboardOverview() {
 		const nextSelected = isInWeek ? today : weekStartDate;
 		setSelectedDay(toDateKey(nextSelected));
 	}, [weekStartDate, selectedDay, setSelectedDay]);
-
-	useEffect(() => {
-		if (!dialogOpen) {
-			setActionError(null);
-			setIsSubmitting(false);
-		}
-	}, [dialogOpen]);
 
 	const mealsByDay = useMemo(() => {
 		const map = new Map<string, MealByDay>();
@@ -95,47 +82,6 @@ export function DashboardOverview() {
 		? slotsByDayType.get(`${selectedKey}:DINNER`)
 		: undefined;
 
-	useEffect(() => {
-		setDraftLunchId(selectedLunchSlot?.mealId ?? "");
-		setDraftDinnerId(selectedDinnerSlot?.mealId ?? "");
-	}, [selectedLunchSlot?.mealId, selectedDinnerSlot?.mealId]);
-
-	const hasChanges =
-		(draftLunchId ?? "") !== (selectedLunchSlot?.mealId ?? "") ||
-		(draftDinnerId ?? "") !== (selectedDinnerSlot?.mealId ?? "");
-
-	async function handleUpdate() {
-		if (!plan) return;
-		setActionError(null);
-		setIsSubmitting(true);
-		try {
-			if (
-				selectedLunchSlot &&
-				draftLunchId !== (selectedLunchSlot.mealId ?? "")
-			) {
-				await updateSlot.mutateAsync({
-					slotId: selectedLunchSlot.id,
-					mealId: draftLunchId === "" ? null : draftLunchId,
-				});
-			}
-			if (
-				selectedDinnerSlot &&
-				draftDinnerId !== (selectedDinnerSlot.mealId ?? "")
-			) {
-				await updateSlot.mutateAsync({
-					slotId: selectedDinnerSlot.id,
-					mealId: draftDinnerId === "" ? null : draftDinnerId,
-				});
-			}
-		} catch (err) {
-			setActionError(
-				err instanceof Error ? err.message : "Failed to update meals.",
-			);
-		} finally {
-			setIsSubmitting(false);
-		}
-	}
-
 	if (isLoading) {
 		return <DashboardOverviewLoading />;
 	}
@@ -161,21 +107,11 @@ export function DashboardOverview() {
 					errorMessage={errorMessage}
 				>
 					<QuickEditOverlay
-						actionError={actionError}
-						dialogOpen={dialogOpen}
-						draftDinnerId={draftDinnerId}
-						draftLunchId={draftLunchId}
-						hasChanges={hasChanges}
-						isSubmitting={isSubmitting}
 						meals={meals}
 						plan={plan}
 						selected={selected}
 						selectedDinnerSlot={selectedDinnerSlot}
 						selectedLunchSlot={selectedLunchSlot}
-						onDraftDinnerChange={setDraftDinnerId}
-						onDraftLunchChange={setDraftLunchId}
-						onOpenChange={setDialogOpen}
-						onUpdate={handleUpdate}
 					/>
 				</SelectedDayCard>
 

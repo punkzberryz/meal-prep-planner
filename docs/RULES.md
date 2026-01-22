@@ -23,6 +23,7 @@
 - Perform auth checks in each `/app` page server component (async) and wrap guarded content in `Suspense` to avoid blocking UI while loading.
 - Break complex UI components into smaller, focused subcomponents for readability.
 - Prefer splitting large components into separate files; aim for ~200-300 lines per file when practical.
+- Keep UI state as local as possible; avoid lifting state unless sharing is required to prevent unnecessary re-renders.
 
 ## AI Agent Notes
 - Favor small, reversible changes.

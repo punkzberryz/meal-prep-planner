@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -25,41 +26,34 @@ import {
 } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import type { PlanMeal, PlanSlot, WeekPlan } from "@/lib/queries/plans";
+import {
+	type PlanMeal,
+	type PlanSlot,
+	useUpdateSlot,
+	type WeekPlan,
+} from "@/lib/queries/plans";
 
 export function QuickEditOverlay({
-	actionError,
-	dialogOpen,
-	draftDinnerId,
-	draftLunchId,
-	hasChanges,
-	isSubmitting,
 	meals,
-	onDraftDinnerChange,
-	onDraftLunchChange,
-	onOpenChange,
-	onUpdate,
 	plan,
 	selected,
 	selectedDinnerSlot,
 	selectedLunchSlot,
+	setOpen,
 }: {
-	actionError: string | null;
-	dialogOpen: boolean;
-	draftDinnerId: string;
-	draftLunchId: string;
-	hasChanges: boolean;
-	isSubmitting: boolean;
 	meals: PlanMeal[];
-	onDraftDinnerChange: (value: string) => void;
-	onDraftLunchChange: (value: string) => void;
-	onOpenChange: (open: boolean) => void;
-	onUpdate: () => void;
 	plan: WeekPlan | null;
 	selected: Date | undefined;
 	selectedDinnerSlot: PlanSlot | undefined;
 	selectedLunchSlot: PlanSlot | undefined;
+	setOpen?: (open: boolean) => void;
 }) {
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [actionError, setActionError] = useState<string | null>(null);
+	const [draftLunchId, setDraftLunchId] = useState("");
+	const [draftDinnerId, setDraftDinnerId] = useState("");
+	const updateSlot = useUpdateSlot();
 	const isMobile = useMediaQuery("(max-width: 640px)");
 	const Root = isMobile ? Drawer : Dialog;
 	const Trigger = isMobile ? DrawerTrigger : DialogTrigger;
@@ -70,9 +64,62 @@ export function QuickEditOverlay({
 	const Footer = isMobile ? DrawerFooter : DialogFooter;
 	const Close = isMobile ? DrawerClose : DialogClose;
 	const bodyClass = isMobile ? "space-y-4 px-4 pb-4" : "space-y-4";
+	const hasChanges =
+		(draftLunchId ?? "") !== (selectedLunchSlot?.mealId ?? "") ||
+		(draftDinnerId ?? "") !== (selectedDinnerSlot?.mealId ?? "");
+
+	useEffect(() => {
+		if (!dialogOpen) {
+			setActionError(null);
+			setIsSubmitting(false);
+		}
+	}, [dialogOpen]);
+
+	useEffect(() => {
+		setDraftLunchId(selectedLunchSlot?.mealId ?? "");
+		setDraftDinnerId(selectedDinnerSlot?.mealId ?? "");
+	}, [selectedLunchSlot?.mealId, selectedDinnerSlot?.mealId]);
+
+	async function handleUpdate() {
+		if (!plan) return;
+		setActionError(null);
+		setIsSubmitting(true);
+		try {
+			if (
+				selectedLunchSlot &&
+				draftLunchId !== (selectedLunchSlot.mealId ?? "")
+			) {
+				await updateSlot.mutateAsync({
+					slotId: selectedLunchSlot.id,
+					mealId: draftLunchId === "" ? null : draftLunchId,
+				});
+			}
+			if (
+				selectedDinnerSlot &&
+				draftDinnerId !== (selectedDinnerSlot.mealId ?? "")
+			) {
+				await updateSlot.mutateAsync({
+					slotId: selectedDinnerSlot.id,
+					mealId: draftDinnerId === "" ? null : draftDinnerId,
+				});
+			}
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to update meals.",
+			);
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
 
 	return (
-		<Root open={dialogOpen} onOpenChange={onOpenChange}>
+		<Root
+			open={dialogOpen}
+			onOpenChange={(open) => {
+				setDialogOpen(open);
+				setOpen?.(open);
+			}}
+		>
 			<Trigger asChild>
 				<Button
 					variant="outline"
@@ -114,7 +161,7 @@ export function QuickEditOverlay({
 							className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
 							disabled={!plan || !selectedLunchSlot || isSubmitting}
 							value={draftLunchId}
-							onChange={(event) => onDraftLunchChange(event.target.value)}
+							onChange={(event) => setDraftLunchId(event.target.value)}
 						>
 							<option value="">Unassigned</option>
 							{meals.map((meal) => (
@@ -136,7 +183,7 @@ export function QuickEditOverlay({
 							className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
 							disabled={!plan || !selectedDinnerSlot || isSubmitting}
 							value={draftDinnerId}
-							onChange={(event) => onDraftDinnerChange(event.target.value)}
+							onChange={(event) => setDraftDinnerId(event.target.value)}
 						>
 							<option value="">Unassigned</option>
 							{meals.map((meal) => (
@@ -157,7 +204,7 @@ export function QuickEditOverlay({
 						<Link href="/app/plans">Open planner</Link>
 					</Button>
 					<Button
-						onClick={onUpdate}
+						onClick={handleUpdate}
 						disabled={!plan || !hasChanges || isSubmitting}
 					>
 						{isSubmitting ? (

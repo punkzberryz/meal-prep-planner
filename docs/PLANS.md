@@ -19,18 +19,13 @@
    - Plan generation v1 (DECIDED): rotation (least-recently-used) with user overrides; requires persisting usage metadata.
 
 1. Meal library (v1)
-   - CRUD for user meals (name, notes, ingredients, servings).
    - Optional: seed a small set of default meals (copy into user space).
-   - Include: free-form tags; ensure tag value is indexed for search.
 
 2. Weekly planner (v1)
-   - Create a weekly plan with per-day meal slots.
-   - Generate suggestions via rotation (least-recently-used); allow user edits/overrides after generation.
    - Keep the planner logic isolated behind a small API/helper surface for iteration.
 
 3. Grocery list (v1)
-   - Aggregate ingredients from the weekly plan into a single list.
-   - One-click copy/share (keep UX lightweight).
+   - No further items listed.
 
 4. Cooking steps (v1)
    - Structured recipe steps with timers and servings.
@@ -43,10 +38,19 @@
    - Add a not-found page.
    - Add a global error boundary page.
    - Add a loading UI page.
+3. Dashboard scope (selected)
+   - Today’s plan summary (lunch/dinner cards, quick edit).
+   - Week snapshot (mini calendar or week grid with meal names).
+   - Grocery list preview (top items + copy).
+   - Upcoming week navigation (prev/next week).
+   - Enhance the meal calendar to show meal info, not just dates.
 
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
 - Asset integration: app hero, empty states (meals/plans/grocery), and loading accents wired into the UI.
+- Meal library (v1): CRUD for meals, ingredients, servings, tags.
+- Weekly planner (v1): week slots, rotation-based generation, slot edits.
+- Grocery list (v1): aggregated ingredient list with one-click copy.
 
 ## Open Decisions
 - Ingredient modeling (DECIDED): store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.

@@ -14,16 +14,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLogin } from "@/lib/queries/auth";
 
 export default function LoginPage() {
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
-	const [loading, setLoading] = useState(false);
+	const login = useLogin();
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setError(null);
-		setLoading(true);
 
 		const formData = new FormData(event.currentTarget);
 		const payload = {
@@ -31,16 +31,10 @@ export default function LoginPage() {
 			password: String(formData.get("password") ?? ""),
 		};
 
-		const response = await fetch("/api/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(payload),
-		});
-
-		setLoading(false);
-		if (!response.ok) {
-			const data = await response.json().catch(() => null);
-			const message = data?.error ?? "Login failed.";
+		try {
+			await login.mutateAsync(payload);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Login failed.";
 			setError(message);
 			toast.error(message);
 			return;
@@ -81,8 +75,8 @@ export default function LoginPage() {
 						/>
 					</div>
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
-					<Button className="w-full" disabled={loading} type="submit">
-						{loading ? "Signing in..." : "Sign in"}
+					<Button className="w-full" disabled={login.isPending} type="submit">
+						{login.isPending ? "Signing in..." : "Sign in"}
 					</Button>
 				</form>
 				<p className="mt-6 text-sm text-muted-foreground">

@@ -14,16 +14,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRegister } from "@/lib/queries/auth";
 
 export default function RegisterPage() {
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
-	const [loading, setLoading] = useState(false);
+	const register = useRegister();
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setError(null);
-		setLoading(true);
 
 		const formData = new FormData(event.currentTarget);
 		const nameValue = String(formData.get("name") ?? "").trim();
@@ -33,16 +33,11 @@ export default function RegisterPage() {
 			...(nameValue ? { name: nameValue } : {}),
 		};
 
-		const response = await fetch("/api/auth/register", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(payload),
-		});
-
-		setLoading(false);
-		if (!response.ok) {
-			const data = await response.json().catch(() => null);
-			const message = data?.error ?? "Registration failed.";
+		try {
+			await register.mutateAsync(payload);
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "Registration failed.";
 			setError(message);
 			toast.error(message);
 			return;
@@ -90,8 +85,12 @@ export default function RegisterPage() {
 						</p>
 					</div>
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
-					<Button className="w-full" disabled={loading} type="submit">
-						{loading ? "Creating account..." : "Create account"}
+					<Button
+						className="w-full"
+						disabled={register.isPending}
+						type="submit"
+					>
+						{register.isPending ? "Creating account..." : "Create account"}
 					</Button>
 				</form>
 				<p className="mt-6 text-sm text-muted-foreground">

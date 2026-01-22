@@ -1,9 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,32 +18,15 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-type UserInfo = {
-	name?: string | null;
-	email?: string | null;
-};
+import { useAuthMe, useLogout } from "@/lib/queries/auth";
+import { queryKeys } from "@/lib/query-keys";
 
 export function UserSection() {
 	const router = useRouter();
-	const [user, setUser] = useState<UserInfo | null>(null);
-
-	useEffect(() => {
-		let active = true;
-		fetch("/api/auth/me")
-			.then((response) => (response.ok ? response.json() : null))
-			.then((data) => {
-				if (!active) return;
-				setUser(data?.user ?? null);
-			})
-			.catch(() => {
-				if (!active) return;
-				setUser(null);
-			});
-		return () => {
-			active = false;
-		};
-	}, []);
+	const queryClient = useQueryClient();
+	const { data } = useAuthMe();
+	const logout = useLogout();
+	const user = data?.user ?? null;
 
 	const displayName = user?.name || user?.email || "User";
 	const initials = useMemo(() => {
@@ -56,7 +40,8 @@ export function UserSection() {
 	}, [displayName]);
 
 	async function handleLogout() {
-		await fetch("/api/auth/logout", { method: "POST" });
+		await logout.mutateAsync();
+		queryClient.setQueryData(queryKeys.auth.me, { user: null });
 		router.push("/");
 		router.refresh();
 	}

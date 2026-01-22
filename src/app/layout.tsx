@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "@/components/app/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const spaceGrotesk = Space_Grotesk({
@@ -33,7 +34,7 @@ export default function RootLayout({
 			<body
 				className={`${spaceGrotesk.variable} ${fraunces.variable} antialiased`}
 			>
-				{children}
+				<QueryProvider>{children}</QueryProvider>
 				<Toaster richColors />
 			</body>
 		</html>

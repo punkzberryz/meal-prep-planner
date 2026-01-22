@@ -13,30 +13,15 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-type ApiMealListItem = {
-	id: string;
-	name: string;
-	notes: string | null;
-	servings: number | null;
-	lastPlannedAt: string | null;
-	createdAt: string;
-	updatedAt: string;
-	tags: string[];
-};
-
-type ApiIngredient = {
-	id: string;
-	position: number;
-	text: string;
-	name: string | null;
-	qty: string | null;
-	unit: string | null;
-};
-
-type ApiMealDetail = ApiMealListItem & {
-	ingredients: ApiIngredient[];
-};
+import {
+	type MealDetail,
+	useCreateMeal,
+	useDeleteMeal,
+	useMealDetail,
+	useMealsList,
+	useUpdateMeal,
+} from "@/lib/queries/meals";
+import { useMealsUiStore } from "@/lib/stores/meals-ui";
 
 function parseLines(value: string) {
 	return value
@@ -72,37 +57,37 @@ function FieldHelp({ text }: { text: string }) {
 }
 
 export function MealLibrary() {
-	const [loadingList, setLoadingList] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [meals, setMeals] = useState<ApiMealListItem[]>([]);
-	const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
-	const [selectedMeal, setSelectedMeal] = useState<ApiMealDetail | null>(null);
-	const [busy, setBusy] = useState(false);
+	const { selectedMealId, setSelectedMealId, clearSelection } =
+		useMealsUiStore();
+	const {
+		data: mealsData,
+		isLoading: loadingList,
+		error: listError,
+	} = useMealsList();
+	const {
+		data: mealDetailData,
+		error: detailError,
+		isFetching: loadingDetail,
+	} = useMealDetail(selectedMealId);
+	const createMeal = useCreateMeal();
+	const updateMeal = useUpdateMeal();
+	const deleteMeal = useDeleteMeal();
+
+	const meals = mealsData?.meals ?? [];
+	const selectedMeal = mealDetailData?.meal ?? null;
+	const busy =
+		createMeal.isPending || updateMeal.isPending || deleteMeal.isPending;
+	const combinedError =
+		error ??
+		(listError instanceof Error ? listError.message : null) ??
+		(detailError instanceof Error ? detailError.message : null);
 
 	const [name, setName] = useState("");
 	const [notes, setNotes] = useState("");
 	const [servings, setServings] = useState<string>("");
 	const [ingredientsText, setIngredientsText] = useState("");
 	const [tagsText, setTagsText] = useState("");
-
-	const loadMeals = useCallback(async () => {
-		setLoadingList(true);
-		setError(null);
-		try {
-			const response = await fetch("/api/meals", { cache: "no-store" });
-			const data = await response.json();
-			if (!response.ok) throw new Error(data?.error ?? "Failed to load meals.");
-			setMeals(data.meals ?? []);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load meals.");
-		} finally {
-			setLoadingList(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		loadMeals();
-	}, [loadMeals]);
 
 	const selectedLabel = useMemo(() => {
 		if (!selectedMealId) return "New meal";
@@ -111,22 +96,7 @@ export function MealLibrary() {
 
 	const isEditingExisting = Boolean(selectedMealId);
 
-	const loadMealDetail = useCallback(async (mealId: string) => {
-		setError(null);
-		setSelectedMeal(null);
-		try {
-			const response = await fetch(`/api/meals/${mealId}`, {
-				cache: "no-store",
-			});
-			const data = await response.json();
-			if (!response.ok) throw new Error(data?.error ?? "Failed to load meal.");
-			setSelectedMeal(data.meal);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load meal.");
-		}
-	}, []);
-
-	const hydrateForm = useCallback((meal: ApiMealDetail | null) => {
+	const hydrateForm = useCallback((meal: MealDetail | null) => {
 		if (!meal) {
 			setName("");
 			setNotes("");
@@ -149,19 +119,17 @@ export function MealLibrary() {
 
 	useEffect(() => {
 		if (!selectedMealId) {
-			setSelectedMeal(null);
 			hydrateForm(null);
 			return;
 		}
-		void loadMealDetail(selectedMealId);
-	}, [hydrateForm, loadMealDetail, selectedMealId]);
-
-	useEffect(() => {
-		if (selectedMeal) hydrateForm(selectedMeal);
-	}, [hydrateForm, selectedMeal]);
+		if (!selectedMeal) {
+			hydrateForm(null);
+			return;
+		}
+		hydrateForm(selectedMeal);
+	}, [selectedMealId, selectedMeal, hydrateForm]);
 
 	async function handleSave() {
-		setBusy(true);
 		setError(null);
 		try {
 			const ingredients = parseLines(ingredientsText).map((text) => ({ text }));
@@ -175,24 +143,21 @@ export function MealLibrary() {
 				tags,
 			};
 
-			const response = await fetch(
-				isEditingExisting ? `/api/meals/${selectedMealId}` : "/api/meals",
-				{
-					method: isEditingExisting ? "PATCH" : "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify(payload),
-				},
-			);
-			const data = await response.json();
-			if (!response.ok) throw new Error(data?.error ?? "Failed to save meal.");
+			if (isEditingExisting && selectedMealId) {
+				const data = await updateMeal.mutateAsync({
+					mealId: selectedMealId,
+					payload,
+				});
+				const createdOrUpdatedId = data.meal?.id as string | undefined;
+				if (createdOrUpdatedId) setSelectedMealId(createdOrUpdatedId);
+				return;
+			}
 
-			await loadMeals();
+			const data = await createMeal.mutateAsync(payload);
 			const createdOrUpdatedId = data.meal?.id as string | undefined;
 			if (createdOrUpdatedId) setSelectedMealId(createdOrUpdatedId);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to save meal.");
-		} finally {
-			setBusy(false);
 		}
 	}
 
@@ -200,24 +165,13 @@ export function MealLibrary() {
 		if (!selectedMealId) return;
 		if (!window.confirm("Delete this meal?")) return;
 
-		setBusy(true);
 		setError(null);
 		try {
-			const response = await fetch(`/api/meals/${selectedMealId}`, {
-				method: "DELETE",
-			});
-			const data = await response.json();
-			if (!response.ok)
-				throw new Error(data?.error ?? "Failed to delete meal.");
-
-			setSelectedMealId(null);
-			setSelectedMeal(null);
+			await deleteMeal.mutateAsync(selectedMealId);
+			clearSelection();
 			hydrateForm(null);
-			await loadMeals();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to delete meal.");
-		} finally {
-			setBusy(false);
 		}
 	}
 
@@ -319,9 +273,14 @@ export function MealLibrary() {
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-5">
-					{error ? (
+					{combinedError ? (
 						<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-							{error}
+							{combinedError}
+						</div>
+					) : null}
+					{loadingDetail ? (
+						<div className="rounded-lg border border-border/60 bg-card/70 px-4 py-3 text-sm text-muted-foreground">
+							Loading meal details...
 						</div>
 					) : null}
 

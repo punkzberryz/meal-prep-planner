@@ -2,67 +2,38 @@
 
 import { addDays, format } from "date-fns";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type ApiMeal = { id: string; name: string };
-type ApiSlot = {
-	id: string;
-	date: string;
-	type: "LUNCH" | "DINNER";
-	mealId: string | null;
-	meal: ApiMeal | null;
-	overriddenAt: string | null;
-};
-type ApiPlan = {
-	id: string;
-	weekStart: string;
-	generatedAt: string | null;
-	slots: ApiSlot[];
-};
+import {
+	type PlanMeal,
+	type PlanSlot,
+	useGeneratePlan,
+	useUpdateSlot,
+	useWeekPlan,
+	type WeekPlan,
+} from "@/lib/queries/plans";
 
 function toWeekStartParam(weekStartIso: string) {
 	const date = new Date(weekStartIso);
 	return format(date, "yyyy-MM-dd");
 }
 
-function slotLabel(type: ApiSlot["type"]) {
+function slotLabel(type: PlanSlot["type"]) {
 	return type === "LUNCH" ? "Lunch" : "Dinner";
 }
 
 export function WeekPlanner() {
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [weekStart, setWeekStart] = useState<string | null>(null);
-	const [plan, setPlan] = useState<ApiPlan | null>(null);
-	const [meals, setMeals] = useState<ApiMeal[]>([]);
 	const [busySlotId, setBusySlotId] = useState<string | null>(null);
-	const [busyGenerate, setBusyGenerate] = useState(false);
+	const [actionError, setActionError] = useState<string | null>(null);
+	const { data, isLoading, error } = useWeekPlan();
+	const generatePlan = useGeneratePlan();
+	const updateSlot = useUpdateSlot();
 
-	const loadCurrentWeek = useCallback(async () => {
-		setLoading(true);
-		setError(null);
-		try {
-			const response = await fetch("/api/plans/week", { cache: "no-store" });
-			const data = await response.json();
-			if (!response.ok) {
-				throw new Error(data?.error ?? "Failed to load plan.");
-			}
-			setWeekStart(data.weekStart);
-			setPlan(data.plan);
-			setMeals(data.meals ?? []);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load plan.");
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		loadCurrentWeek();
-	}, [loadCurrentWeek]);
+	const weekStart = data?.weekStart ?? null;
+	const plan: WeekPlan | null = data?.plan ?? null;
+	const meals: PlanMeal[] = data?.meals ?? [];
 
 	const days = useMemo(() => {
 		if (!weekStart) return [];
@@ -71,7 +42,7 @@ export function WeekPlanner() {
 	}, [weekStart]);
 
 	const slotsByKey = useMemo(() => {
-		const map = new Map<string, ApiSlot>();
+		const map = new Map<string, PlanSlot>();
 		for (const slot of plan?.slots ?? []) {
 			map.set(`${slot.date}:${slot.type}`, slot);
 		}
@@ -80,54 +51,31 @@ export function WeekPlanner() {
 
 	async function handleGenerate(force: boolean) {
 		if (!weekStart) return;
-		setBusyGenerate(true);
-		setError(null);
+		setActionError(null);
 		try {
-			const response = await fetch("/api/plans/week/generate", {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({
-					weekStart: toWeekStartParam(weekStart),
-					force,
-				}),
+			await generatePlan.mutateAsync({
+				weekStart: toWeekStartParam(weekStart),
+				force,
 			});
-			const data = await response.json();
-			if (!response.ok) {
-				throw new Error(data?.error ?? "Failed to generate plan.");
-			}
-			setPlan(data.plan);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to generate plan.");
-		} finally {
-			setBusyGenerate(false);
+			setActionError(
+				err instanceof Error ? err.message : "Failed to generate plan.",
+			);
 		}
 	}
 
 	async function handleSlotChange(slotId: string, nextMealId: string) {
 		setBusySlotId(slotId);
-		setError(null);
+		setActionError(null);
 		try {
-			const response = await fetch(`/api/plans/slots/${slotId}`, {
-				method: "PATCH",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ mealId: nextMealId === "" ? null : nextMealId }),
-			});
-			const data = await response.json();
-			if (!response.ok) {
-				throw new Error(data?.error ?? "Failed to update slot.");
-			}
-
-			setPlan((prev) => {
-				if (!prev) return prev;
-				return {
-					...prev,
-					slots: prev.slots.map((slot) =>
-						slot.id === slotId ? { ...slot, ...data.slot } : slot,
-					),
-				};
+			await updateSlot.mutateAsync({
+				slotId,
+				mealId: nextMealId === "" ? null : nextMealId,
 			});
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to update slot.");
+			setActionError(
+				err instanceof Error ? err.message : "Failed to update slot.",
+			);
 		} finally {
 			setBusySlotId(null);
 		}
@@ -140,7 +88,7 @@ export function WeekPlanner() {
 		return `${format(start, "MMM d")} - ${format(end, "MMM d")}`;
 	}, [days]);
 
-	if (loading) {
+	if (isLoading) {
 		return (
 			<Card className="border-border bg-card/80">
 				<CardHeader>
@@ -172,6 +120,9 @@ export function WeekPlanner() {
 
 	const hasMeals = meals.length > 0;
 	const hasPlan = Boolean(plan);
+	const busyGenerate = generatePlan.isPending;
+	const combinedError =
+		actionError ?? (error instanceof Error ? error.message : null);
 
 	return (
 		<Card className="border-border bg-card/80">
@@ -205,9 +156,9 @@ export function WeekPlanner() {
 			</CardHeader>
 
 			<CardContent className="space-y-4">
-				{error ? (
+				{combinedError ? (
 					<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-						{error}
+						{combinedError}
 					</div>
 				) : null}
 

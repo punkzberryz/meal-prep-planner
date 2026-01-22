@@ -3,29 +3,13 @@
 import { addDays, format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useGroceryList } from "@/lib/queries/grocery";
 
-type ApiGroceryItem = {
-	text: string;
-	count: number;
-	mealIds: string[];
-	mealNames: string[];
-};
-
-type ApiGroceryResponse = {
-	weekStart: string;
-	plan: {
-		id: string;
-		generatedAt: string | null;
-		slotCount: number;
-	} | null;
-	items: ApiGroceryItem[];
-};
-
-function buildCopyText(items: ApiGroceryItem[]) {
+function buildCopyText(items: { text: string; count: number }[]) {
 	return items
 		.map((item) =>
 			item.count > 1 ? `${item.text} (x${item.count})` : item.text,
@@ -50,38 +34,10 @@ async function copyToClipboard(text: string) {
 }
 
 export function GroceryList() {
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [data, setData] = useState<ApiGroceryResponse | null>(null);
 	const [copyStatus, setCopyStatus] = useState<"idle" | "done" | "error">(
 		"idle",
 	);
-
-	const loadGrocery = useCallback(async () => {
-		setLoading(true);
-		setError(null);
-		try {
-			const response = await fetch("/api/grocery", { cache: "no-store" });
-			const payload = (await response.json()) as ApiGroceryResponse;
-			if (!response.ok) {
-				throw new Error(
-					(payload as { error?: string })?.error ??
-						"Failed to load grocery list.",
-				);
-			}
-			setData(payload);
-		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Failed to load grocery list.",
-			);
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		loadGrocery();
-	}, [loadGrocery]);
+	const { data, isLoading, error } = useGroceryList();
 
 	const weekRange = useMemo(() => {
 		if (!data?.weekStart) return "";
@@ -105,7 +61,7 @@ export function GroceryList() {
 		}
 	}
 
-	if (loading) {
+	if (isLoading) {
 		return (
 			<Card className="border-border bg-card/80">
 				<CardHeader>
@@ -132,7 +88,7 @@ export function GroceryList() {
 				</CardHeader>
 				<CardContent>
 					<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-						{error}
+						{error instanceof Error ? error.message : "Failed to load grocery."}
 					</div>
 				</CardContent>
 			</Card>

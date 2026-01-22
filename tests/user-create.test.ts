@@ -2,14 +2,14 @@ import { execSync } from "node:child_process";
 import { existsSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, expect, test } from "vitest";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "@prisma/client";
 
-const testDbUrl = "file:./test.db";
-const testDbPath = path.resolve("test.db");
+const testDbUrl = "file:./test-user-create.db";
+const testDbPath = path.resolve("test-user-create.db");
 
-async function getPrisma() {
-	const module = await import("../src/lib/db");
-	return module.prisma;
-}
+const adapter = new PrismaBetterSqlite3({ url: testDbUrl });
+const prisma = new PrismaClient({ adapter });
 
 beforeAll(() => {
 	process.env.DATABASE_URL = testDbUrl;
@@ -26,7 +26,6 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-	const prisma = await getPrisma();
 	await prisma.$disconnect();
 	if (existsSync(testDbPath)) {
 		unlinkSync(testDbPath);
@@ -34,7 +33,6 @@ afterAll(async () => {
 });
 
 test("creates a user record", async () => {
-	const prisma = await getPrisma();
 	const email = `test-${Date.now()}@example.com`;
 
 	const user = await prisma.user.create({

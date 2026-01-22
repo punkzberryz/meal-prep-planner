@@ -29,16 +29,16 @@
    - Keep the planner logic isolated behind a small API/helper surface for iteration.
 
 3. Grocery list (v1)
-   - Aggregate ingredients from the weekly plan into a single list. (DONE)
-   - One-click copy/share (keep UX lightweight). (DONE)
+   - Aggregate ingredients from the weekly plan into a single list.
+   - One-click copy/share (keep UX lightweight).
 
 4. Cooking steps (v1)
    - Structured recipe steps with timers and servings.
 
 ## Near-Term Additions
 1. Auth-aware marketing flow
-   - Redirect authenticated users away from `/login` and `/register`. (DONE)
-   - Swap the landing page "Sign in" CTA to "Go to app" when signed in. (DONE)
+   - Redirect authenticated users away from `/login` and `/register`.
+   - Swap the landing page "Sign in" CTA to "Go to app" when signed in.
 2. App-wide UX scaffolding
    - Add a not-found page.
    - Add a global error boundary page.

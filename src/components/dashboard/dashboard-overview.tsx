@@ -33,7 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { useUpdateSlot, useWeekPlan, type PlanSlot } from "@/lib/queries/plans";
+import { type PlanSlot, useUpdateSlot, useWeekPlan } from "@/lib/queries/plans";
 import { usePlannerUiStore } from "@/lib/stores/planner-ui";
 import { cn } from "@/lib/utils";
 
@@ -173,7 +173,7 @@ export function DashboardOverview() {
 			setActionError(null);
 			setIsSubmitting(false);
 		}
-	}, [dialogOpen, selectedDay]);
+	}, [dialogOpen]);
 
 	const mealsByDay = useMemo(() => {
 		const map = new Map<string, MealByDay>();
@@ -218,7 +218,7 @@ export function DashboardOverview() {
 	useEffect(() => {
 		setDraftLunchId(selectedLunchSlot?.mealId ?? "");
 		setDraftDinnerId(selectedDinnerSlot?.mealId ?? "");
-	}, [selectedLunchSlot?.mealId, selectedDinnerSlot?.mealId, selectedDay]);
+	}, [selectedLunchSlot?.mealId, selectedDinnerSlot?.mealId]);
 
 	const hasChanges =
 		(draftLunchId ?? "") !== (selectedLunchSlot?.mealId ?? "") ||
@@ -229,7 +229,10 @@ export function DashboardOverview() {
 		setActionError(null);
 		setIsSubmitting(true);
 		try {
-			if (selectedLunchSlot && draftLunchId !== (selectedLunchSlot.mealId ?? "")) {
+			if (
+				selectedLunchSlot &&
+				draftLunchId !== (selectedLunchSlot.mealId ?? "")
+			) {
 				await updateSlot.mutateAsync({
 					slotId: selectedLunchSlot.id,
 					mealId: draftLunchId === "" ? null : draftLunchId,
@@ -425,11 +428,7 @@ export function DashboardOverview() {
 										<select
 											id="quick-edit-lunch"
 											className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
-											disabled={
-												!plan ||
-												!selectedLunchSlot ||
-												isSubmitting
-											}
+											disabled={!plan || !selectedLunchSlot || isSubmitting}
 											value={draftLunchId}
 											onChange={(event) => setDraftLunchId(event.target.value)}
 										>
@@ -451,11 +450,7 @@ export function DashboardOverview() {
 										<select
 											id="quick-edit-dinner"
 											className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
-											disabled={
-												!plan ||
-												!selectedDinnerSlot ||
-												isSubmitting
-											}
+											disabled={!plan || !selectedDinnerSlot || isSubmitting}
 											value={draftDinnerId}
 											onChange={(event) => setDraftDinnerId(event.target.value)}
 										>

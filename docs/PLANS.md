@@ -23,6 +23,7 @@
 
 2. Weekly planner (v1)
    - Keep the planner logic isolated behind a small API/helper surface for iteration.
+   - Allow navigating to previous and future weeks in `/app/plans`.
 
 3. Grocery list (v1)
    - No further items listed.

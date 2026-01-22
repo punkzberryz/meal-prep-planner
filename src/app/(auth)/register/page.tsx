@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -41,11 +42,14 @@ export default function RegisterPage() {
 		setLoading(false);
 		if (!response.ok) {
 			const data = await response.json().catch(() => null);
-			setError(data?.error ?? "Registration failed.");
+			const message = data?.error ?? "Registration failed.";
+			setError(message);
+			toast.error(message);
 			return;
 		}
 
-    router.push("/app");
+		toast.success("Account created.");
+		router.push("/app");
 	}
 
 	return (

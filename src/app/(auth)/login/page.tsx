@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -39,11 +40,14 @@ export default function LoginPage() {
 		setLoading(false);
 		if (!response.ok) {
 			const data = await response.json().catch(() => null);
-			setError(data?.error ?? "Login failed.");
+			const message = data?.error ?? "Login failed.";
+			setError(message);
+			toast.error(message);
 			return;
 		}
 
-    router.push("/app");
+		toast.success("Welcome back.");
+		router.push("/app");
 	}
 
 	return (

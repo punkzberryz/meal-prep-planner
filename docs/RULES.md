@@ -15,7 +15,9 @@
 - Place authenticated routes under `src/app/(app)/app/**` (e.g., `/app`, `/app/meals`).
 - Use Zustand for client-side state management.
 - Use TanStack Query for data fetching and caching.
+- Perform auth checks in each `/app` page server component (async) and wrap guarded content in `Suspense` to avoid blocking UI while loading.
 
 ## AI Agent Notes
 - Favor small, reversible changes.
 - Update `docs/PLANS.md` when roadmap shifts.
+- Run `pnpm format` and `pnpm lint` after making code changes.

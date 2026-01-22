@@ -1,27 +1,20 @@
+import { AppPage } from "@/components/app/app-page";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 export default function AppDashboardPage() {
 	return (
-		<div className="min-h-svh">
-			<header className="flex flex-wrap items-center justify-between gap-4 border-b border-emerald-900/10 bg-white/70 px-6 py-4 backdrop-blur">
-				<div className="flex items-center gap-3">
-					<SidebarTrigger />
-					<div>
-						<p className="text-sm text-emerald-900/70">Welcome back</p>
-						<h1 className="font-display text-2xl text-emerald-950">
-							Your weekly prep dashboard
-						</h1>
-					</div>
-				</div>
+		<AppPage
+			title="Your weekly prep dashboard"
+			subtitle="Welcome back"
+			actions={
 				<Button className="bg-emerald-900 text-white hover:bg-emerald-800">
 					Create plan
 				</Button>
-			</header>
-
-			<main className="mx-auto grid w-full max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr]">
+			}
+		>
+			<div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
 				<Card className="border-emerald-900/10 bg-white/80">
 					<CardHeader className="flex flex-row items-center justify-between">
 						<div>
@@ -88,7 +81,7 @@ export default function AppDashboardPage() {
 						</CardContent>
 					</Card>
 				</div>
-			</main>
-		</div>
+			</div>
+		</AppPage>
 	);
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const spaceGrotesk = Space_Grotesk({
 	variable: "--font-space-grotesk",
@@ -28,6 +29,7 @@ export default function RootLayout({
 				className={`${spaceGrotesk.variable} ${fraunces.variable} antialiased`}
 			>
 				{children}
+				<Toaster richColors />
 			</body>
 		</html>
 	);

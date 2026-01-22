@@ -1,14 +1,9 @@
 "use client";
 
+import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { LogOutIcon, UserRoundIcon } from "lucide-react";
-import {
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-} from "@/components/ui/sidebar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,6 +12,11 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 type UserInfo = {
 	name?: string | null;
@@ -81,9 +81,7 @@ export function UserSection() {
 									<span className="text-sm font-medium text-emerald-950">
 										{displayName}
 									</span>
-									<span className="text-xs text-emerald-700">
-										Account
-									</span>
+									<span className="text-xs text-emerald-700">Account</span>
 								</div>
 							</SidebarMenuButton>
 						</DropdownMenuTrigger>

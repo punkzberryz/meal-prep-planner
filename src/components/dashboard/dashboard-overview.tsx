@@ -2,7 +2,7 @@
 
 import { addDays, format, isWithinInterval, parse } from "date-fns";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { DayButton } from "react-day-picker";
 import { getDefaultClassNames } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { type PlanSlot, useUpdateSlot, useWeekPlan } from "@/lib/queries/plans";
+import {
+	type PlanMeal,
+	type PlanSlot,
+	useUpdateSlot,
+	useWeekPlan,
+	type WeekPlan,
+} from "@/lib/queries/plans";
 import { usePlannerUiStore } from "@/lib/stores/planner-ui";
 import { cn } from "@/lib/utils";
 
@@ -150,7 +156,11 @@ export function DashboardOverview() {
 	const [draftLunchId, setDraftLunchId] = useState("");
 	const [draftDinnerId, setDraftDinnerId] = useState("");
 	const updateSlot = useUpdateSlot();
-	const isMobile = useMediaQuery("(max-width: 640px)");
+	const errorMessage = error
+		? error instanceof Error
+			? error.message
+			: "Failed to load week."
+		: null;
 
 	const weekStartDate = useMemo(() => {
 		if (!data?.weekStart) return null;
@@ -207,7 +217,7 @@ export function DashboardOverview() {
 		return Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
 	}, [weekStartDate]);
 
-	const hasPlan = Boolean(data?.plan);
+	const hasPlan = Boolean(plan);
 	const selectedLunchSlot = selectedKey
 		? slotsByDayType.get(`${selectedKey}:LUNCH`)
 		: undefined;
@@ -256,6 +266,248 @@ export function DashboardOverview() {
 		}
 	}
 
+	if (isLoading) {
+		return <DashboardOverviewLoading />;
+	}
+
+	return (
+		<div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+			<div className="space-y-6">
+				<MealCalendarCard
+					hasPlan={hasPlan}
+					selected={selected}
+					weekStartDate={weekStartDate}
+					mealsByDay={mealsByDay}
+					onSelect={(date) => setSelectedDay(date ? toDateKey(date) : null)}
+				/>
+
+				<WeekSnapshotCard weekDays={weekDays} mealsByDay={mealsByDay} />
+			</div>
+
+			<div className="space-y-6">
+				<SelectedDayCard
+					selected={selected}
+					selectedMeals={selectedMeals}
+					errorMessage={errorMessage}
+				>
+					<QuickEditOverlay
+						actionError={actionError}
+						dialogOpen={dialogOpen}
+						draftDinnerId={draftDinnerId}
+						draftLunchId={draftLunchId}
+						hasChanges={hasChanges}
+						isSubmitting={isSubmitting}
+						meals={meals}
+						plan={plan}
+						selected={selected}
+						selectedDinnerSlot={selectedDinnerSlot}
+						selectedLunchSlot={selectedLunchSlot}
+						onDraftDinnerChange={setDraftDinnerId}
+						onDraftLunchChange={setDraftLunchId}
+						onOpenChange={setDialogOpen}
+						onUpdate={handleUpdate}
+					/>
+				</SelectedDayCard>
+
+				<GroceryPreviewCard />
+			</div>
+		</div>
+	);
+}
+
+function DashboardOverviewLoading() {
+	return (
+		<div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+			<Card className="border-border bg-card/80">
+				<CardHeader>
+					<CardTitle className="font-display text-xl text-foreground">
+						Meal calendar
+					</CardTitle>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<Skeleton className="h-64 w-full" />
+				</CardContent>
+			</Card>
+			<div className="space-y-6">
+				<Card className="border-accent/40 bg-card/85">
+					<CardHeader>
+						<CardTitle className="font-display text-lg text-foreground">
+							Selected day
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<Skeleton className="h-5 w-3/4" />
+						<Skeleton className="h-5 w-2/3" />
+						<Skeleton className="h-10 w-full" />
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+	);
+}
+
+function MealCalendarCard({
+	hasPlan,
+	mealsByDay,
+	onSelect,
+	selected,
+	weekStartDate,
+}: {
+	hasPlan: boolean;
+	mealsByDay: Map<string, MealByDay>;
+	onSelect: (date: Date | undefined) => void;
+	selected: Date | undefined;
+	weekStartDate: Date | null;
+}) {
+	return (
+		<Card className="border-border bg-card/80">
+			<CardHeader className="flex flex-row items-center justify-between">
+				<div>
+					<CardTitle className="font-display text-xl text-foreground">
+						Meal calendar
+					</CardTitle>
+					<p className="text-sm text-muted-foreground">
+						Select a day to review lunches and dinners.
+					</p>
+				</div>
+				<span className="rounded-full bg-accent/70 px-3 py-1 text-xs text-foreground">
+					{hasPlan ? "Planned" : "Draft week"}
+				</span>
+			</CardHeader>
+			<CardContent>
+				<Calendar
+					mode="single"
+					selected={selected}
+					onSelect={onSelect}
+					defaultMonth={weekStartDate ?? undefined}
+					className="[--cell-size:--spacing(14)]"
+					classNames={{ day: "overflow-hidden" }}
+					components={{
+						DayButton: (props) => (
+							<CalendarDayButton {...props} mealsByDay={mealsByDay} />
+						),
+					}}
+				/>
+			</CardContent>
+		</Card>
+	);
+}
+
+function WeekSnapshotCard({
+	mealsByDay,
+	weekDays,
+}: {
+	mealsByDay: Map<string, MealByDay>;
+	weekDays: Date[];
+}) {
+	return (
+		<Card className="border-border bg-card/80">
+			<CardHeader>
+				<CardTitle className="font-display text-xl text-foreground">
+					Week snapshot
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-3 text-sm text-muted-foreground">
+				{weekDays.slice(0, 3).map((day, index) => {
+					const key = toDateKey(day);
+					const meals = mealsByDay.get(key);
+					return (
+						<div key={key} className="space-y-2">
+							<div className="flex items-center justify-between">
+								<span>{format(day, "EEE")}</span>
+								<span>Lunch: {meals?.LUNCH ?? "Unassigned"}</span>
+								<span>Dinner: {meals?.DINNER ?? "Unassigned"}</span>
+							</div>
+							{index < 2 ? <Separator /> : null}
+						</div>
+					);
+				})}
+			</CardContent>
+		</Card>
+	);
+}
+
+function SelectedDayCard({
+	children,
+	errorMessage,
+	selected,
+	selectedMeals,
+}: {
+	children: ReactNode;
+	errorMessage: string | null;
+	selected: Date | undefined;
+	selectedMeals: MealByDay | undefined;
+}) {
+	return (
+		<Card className="border-accent/40 bg-card/85">
+			<CardHeader>
+				<CardTitle className="font-display text-lg text-foreground">
+					Selected day
+				</CardTitle>
+				{selected ? (
+					<p className="text-sm text-muted-foreground">
+						{format(selected, "EEE, MMM d")}
+					</p>
+				) : null}
+			</CardHeader>
+			<CardContent className="space-y-4 text-sm text-foreground/80">
+				{errorMessage ? (
+					<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+						{errorMessage}
+					</div>
+				) : null}
+				<div className="flex items-center justify-between">
+					<span>Lunch</span>
+					<span className="font-medium">
+						{selectedMeals?.LUNCH ?? "Unassigned"}
+					</span>
+				</div>
+				<div className="flex items-center justify-between">
+					<span>Dinner</span>
+					<span className="font-medium">
+						{selectedMeals?.DINNER ?? "Unassigned"}
+					</span>
+				</div>
+				{children}
+			</CardContent>
+		</Card>
+	);
+}
+
+function QuickEditOverlay({
+	actionError,
+	dialogOpen,
+	draftDinnerId,
+	draftLunchId,
+	hasChanges,
+	isSubmitting,
+	meals,
+	onDraftDinnerChange,
+	onDraftLunchChange,
+	onOpenChange,
+	onUpdate,
+	plan,
+	selected,
+	selectedDinnerSlot,
+	selectedLunchSlot,
+}: {
+	actionError: string | null;
+	dialogOpen: boolean;
+	draftDinnerId: string;
+	draftLunchId: string;
+	hasChanges: boolean;
+	isSubmitting: boolean;
+	meals: PlanMeal[];
+	onDraftDinnerChange: (value: string) => void;
+	onDraftLunchChange: (value: string) => void;
+	onOpenChange: (open: boolean) => void;
+	onUpdate: () => void;
+	plan: WeekPlan | null;
+	selected: Date | undefined;
+	selectedDinnerSlot: PlanSlot | undefined;
+	selectedLunchSlot: PlanSlot | undefined;
+}) {
+	const isMobile = useMediaQuery("(max-width: 640px)");
 	const Root = isMobile ? Drawer : Dialog;
 	const Trigger = isMobile ? DrawerTrigger : DialogTrigger;
 	const Content = isMobile ? DrawerContent : DialogContent;
@@ -266,259 +518,138 @@ export function DashboardOverview() {
 	const Close = isMobile ? DrawerClose : DialogClose;
 	const bodyClass = isMobile ? "space-y-4 px-4 pb-4" : "space-y-4";
 
-	if (isLoading) {
-		return (
-			<div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-				<Card className="border-border bg-card/80">
-					<CardHeader>
-						<CardTitle className="font-display text-xl text-foreground">
-							Meal calendar
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<Skeleton className="h-64 w-full" />
-					</CardContent>
-				</Card>
-				<div className="space-y-6">
-					<Card className="border-accent/40 bg-card/85">
-						<CardHeader>
-							<CardTitle className="font-display text-lg text-foreground">
-								Selected day
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<Skeleton className="h-5 w-3/4" />
-							<Skeleton className="h-5 w-2/3" />
-							<Skeleton className="h-10 w-full" />
-						</CardContent>
-					</Card>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-			<div className="space-y-6">
-				<Card className="border-border bg-card/80">
-					<CardHeader className="flex flex-row items-center justify-between">
-						<div>
-							<CardTitle className="font-display text-xl text-foreground">
-								Meal calendar
-							</CardTitle>
-							<p className="text-sm text-muted-foreground">
-								Select a day to review lunches and dinners.
-							</p>
-						</div>
-						<span className="rounded-full bg-accent/70 px-3 py-1 text-xs text-foreground">
-							{hasPlan ? "Planned" : "Draft week"}
-						</span>
-					</CardHeader>
-					<CardContent>
-						<Calendar
-							mode="single"
-							selected={selected}
-							onSelect={(date) => setSelectedDay(date ? toDateKey(date) : null)}
-							defaultMonth={weekStartDate ?? undefined}
-							className="[--cell-size:--spacing(14)]"
-							classNames={{ day: "overflow-hidden" }}
-							components={{
-								DayButton: (props) => (
-									<CalendarDayButton {...props} mealsByDay={mealsByDay} />
-								),
-							}}
-						/>
-					</CardContent>
-				</Card>
-
-				<Card className="border-border bg-card/80">
-					<CardHeader>
-						<CardTitle className="font-display text-xl text-foreground">
-							Week snapshot
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-3 text-sm text-muted-foreground">
-						{weekDays.slice(0, 3).map((day, index) => {
-							const key = toDateKey(day);
-							const meals = mealsByDay.get(key);
-							return (
-								<div key={key} className="space-y-2">
-									<div className="flex items-center justify-between">
-										<span>{format(day, "EEE")}</span>
-										<span>Lunch: {meals?.LUNCH ?? "Unassigned"}</span>
-										<span>Dinner: {meals?.DINNER ?? "Unassigned"}</span>
-									</div>
-									{index < 2 ? <Separator /> : null}
-								</div>
-							);
-						})}
-					</CardContent>
-				</Card>
-			</div>
-
-			<div className="space-y-6">
-				<Card className="border-accent/40 bg-card/85">
-					<CardHeader>
-						<CardTitle className="font-display text-lg text-foreground">
-							Selected day
-						</CardTitle>
-						{selected ? (
-							<p className="text-sm text-muted-foreground">
-								{format(selected, "EEE, MMM d")}
+		<Root open={dialogOpen} onOpenChange={onOpenChange}>
+			<Trigger asChild>
+				<Button
+					variant="outline"
+					className="w-full border-border"
+					disabled={!selected}
+				>
+					Quick edit
+				</Button>
+			</Trigger>
+			<Content>
+				<Header>
+					<Title>Quick edit meals</Title>
+					<Description>
+						{selected
+							? `Update meals for ${format(selected, "EEE, MMM d")}.`
+							: "Select a day to edit meals."}
+					</Description>
+				</Header>
+				{actionError ? (
+					<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+						{actionError}
+					</div>
+				) : null}
+				{!plan ? (
+					<div className="rounded-lg border border-accent/40 bg-accent/30 px-4 py-3 text-sm text-foreground/80">
+						Generate a weekly plan before editing meals.
+					</div>
+				) : null}
+				{plan && meals.length === 0 ? (
+					<div className="rounded-lg border border-accent/40 bg-accent/30 px-4 py-3 text-sm text-foreground/80">
+						Add meals to your library to update this day.
+					</div>
+				) : null}
+				<div className={bodyClass}>
+					<div className="space-y-2">
+						<Label htmlFor="quick-edit-lunch">Lunch</Label>
+						<select
+							id="quick-edit-lunch"
+							className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+							disabled={!plan || !selectedLunchSlot || isSubmitting}
+							value={draftLunchId}
+							onChange={(event) => onDraftLunchChange(event.target.value)}
+						>
+							<option value="">Unassigned</option>
+							{meals.map((meal) => (
+								<option key={meal.id} value={meal.id}>
+									{meal.name}
+								</option>
+							))}
+						</select>
+						{plan && !selectedLunchSlot ? (
+							<p className="text-xs text-muted-foreground">
+								No lunch slot generated for this day.
 							</p>
 						) : null}
-					</CardHeader>
-					<CardContent className="space-y-4 text-sm text-foreground/80">
-						{error ? (
-							<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-								{error instanceof Error
-									? error.message
-									: "Failed to load week."}
-							</div>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="quick-edit-dinner">Dinner</Label>
+						<select
+							id="quick-edit-dinner"
+							className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+							disabled={!plan || !selectedDinnerSlot || isSubmitting}
+							value={draftDinnerId}
+							onChange={(event) => onDraftDinnerChange(event.target.value)}
+						>
+							<option value="">Unassigned</option>
+							{meals.map((meal) => (
+								<option key={meal.id} value={meal.id}>
+									{meal.name}
+								</option>
+							))}
+						</select>
+						{plan && !selectedDinnerSlot ? (
+							<p className="text-xs text-muted-foreground">
+								No dinner slot generated for this day.
+							</p>
 						) : null}
-						<div className="flex items-center justify-between">
-							<span>Lunch</span>
-							<span className="font-medium">
-								{selectedMeals?.LUNCH ?? "Unassigned"}
+					</div>
+				</div>
+				<Footer>
+					<Button asChild variant="ghost">
+						<Link href="/app/plans">Open planner</Link>
+					</Button>
+					<Button
+						onClick={onUpdate}
+						disabled={!plan || !hasChanges || isSubmitting}
+					>
+						{isSubmitting ? (
+							<span className="inline-flex items-center gap-2">
+								<span className="inline-flex size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+								Updating
 							</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span>Dinner</span>
-							<span className="font-medium">
-								{selectedMeals?.DINNER ?? "Unassigned"}
-							</span>
-						</div>
-						<Root open={dialogOpen} onOpenChange={setDialogOpen}>
-							<Trigger asChild>
-								<Button
-									variant="outline"
-									className="w-full border-border"
-									disabled={!selected}
-								>
-									Quick edit
-								</Button>
-							</Trigger>
-							<Content>
-								<Header>
-									<Title>Quick edit meals</Title>
-									<Description>
-										{selected
-											? `Update meals for ${format(selected, "EEE, MMM d")}.`
-											: "Select a day to edit meals."}
-									</Description>
-								</Header>
-								{actionError ? (
-									<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-										{actionError}
-									</div>
-								) : null}
-								{!plan ? (
-									<div className="rounded-lg border border-accent/40 bg-accent/30 px-4 py-3 text-sm text-foreground/80">
-										Generate a weekly plan before editing meals.
-									</div>
-								) : null}
-								{plan && meals.length === 0 ? (
-									<div className="rounded-lg border border-accent/40 bg-accent/30 px-4 py-3 text-sm text-foreground/80">
-										Add meals to your library to update this day.
-									</div>
-								) : null}
-								<div className={bodyClass}>
-									<div className="space-y-2">
-										<Label htmlFor="quick-edit-lunch">Lunch</Label>
-										<select
-											id="quick-edit-lunch"
-											className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
-											disabled={!plan || !selectedLunchSlot || isSubmitting}
-											value={draftLunchId}
-											onChange={(event) => setDraftLunchId(event.target.value)}
-										>
-											<option value="">Unassigned</option>
-											{meals.map((meal) => (
-												<option key={meal.id} value={meal.id}>
-													{meal.name}
-												</option>
-											))}
-										</select>
-										{plan && !selectedLunchSlot ? (
-											<p className="text-xs text-muted-foreground">
-												No lunch slot generated for this day.
-											</p>
-										) : null}
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="quick-edit-dinner">Dinner</Label>
-										<select
-											id="quick-edit-dinner"
-											className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
-											disabled={!plan || !selectedDinnerSlot || isSubmitting}
-											value={draftDinnerId}
-											onChange={(event) => setDraftDinnerId(event.target.value)}
-										>
-											<option value="">Unassigned</option>
-											{meals.map((meal) => (
-												<option key={meal.id} value={meal.id}>
-													{meal.name}
-												</option>
-											))}
-										</select>
-										{plan && !selectedDinnerSlot ? (
-											<p className="text-xs text-muted-foreground">
-												No dinner slot generated for this day.
-											</p>
-										) : null}
-									</div>
-								</div>
-								<Footer>
-									<Button asChild variant="ghost">
-										<Link href="/app/plans">Open planner</Link>
-									</Button>
-									<Button
-										onClick={handleUpdate}
-										disabled={!plan || !hasChanges || isSubmitting}
-									>
-										{isSubmitting ? (
-											<span className="inline-flex items-center gap-2">
-												<span className="inline-flex size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-												Updating
-											</span>
-										) : (
-											"Update"
-										)}
-									</Button>
-									<Close asChild>
-										<Button variant="outline">Done</Button>
-									</Close>
-								</Footer>
-							</Content>
-						</Root>
-					</CardContent>
-				</Card>
+						) : (
+							"Update"
+						)}
+					</Button>
+					<Close asChild>
+						<Button variant="outline">Done</Button>
+					</Close>
+				</Footer>
+			</Content>
+		</Root>
+	);
+}
 
-				<Card className="border-border bg-card/75">
-					<CardHeader>
-						<CardTitle className="font-display text-lg text-foreground">
-							Grocery list preview
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-3 text-sm text-muted-foreground">
-						<div className="flex items-center justify-between">
-							<span>Produce</span>
-							<span>Spinach, lemons, peppers</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span>Protein</span>
-							<span>Chickpeas, tofu</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span>Pantry</span>
-							<span>Tahini, olive oil</span>
-						</div>
-						<Button variant="outline" className="w-full border-border">
-							Copy list
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		</div>
+function GroceryPreviewCard() {
+	return (
+		<Card className="border-border bg-card/75">
+			<CardHeader>
+				<CardTitle className="font-display text-lg text-foreground">
+					Grocery list preview
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-3 text-sm text-muted-foreground">
+				<div className="flex items-center justify-between">
+					<span>Produce</span>
+					<span>Spinach, lemons, peppers</span>
+				</div>
+				<div className="flex items-center justify-between">
+					<span>Protein</span>
+					<span>Chickpeas, tofu</span>
+				</div>
+				<div className="flex items-center justify-between">
+					<span>Pantry</span>
+					<span>Tahini, olive oil</span>
+				</div>
+				<Button variant="outline" className="w-full border-border">
+					Copy list
+				</Button>
+			</CardContent>
+		</Card>
 	);
 }

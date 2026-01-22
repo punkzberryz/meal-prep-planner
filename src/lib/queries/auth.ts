@@ -33,6 +33,21 @@ export function useAuthMe() {
 	});
 }
 
+export function useRefreshSession(enabled: boolean) {
+	return useQuery({
+		queryKey: queryKeys.auth.refresh,
+		queryFn: () =>
+			apiJson<AuthMeResponse>(
+				"/api/auth/refresh",
+				{ method: "POST" },
+				{ acceptStatuses: [401] },
+			),
+		enabled,
+		refetchInterval: 1000 * 60 * 30,
+		refetchIntervalInBackground: true,
+	});
+}
+
 export function useLogin() {
 	const queryClient = useQueryClient();
 

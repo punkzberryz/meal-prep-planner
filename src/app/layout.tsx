@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { AuthRefresh } from "@/components/app/auth-refresh";
 import { QueryProvider } from "@/components/app/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -34,7 +35,10 @@ export default function RootLayout({
 			<body
 				className={`${spaceGrotesk.variable} ${fraunces.variable} antialiased`}
 			>
-				<QueryProvider>{children}</QueryProvider>
+				<QueryProvider>
+					<AuthRefresh />
+					{children}
+				</QueryProvider>
 				<Toaster richColors />
 			</body>
 		</html>

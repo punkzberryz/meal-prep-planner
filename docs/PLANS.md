@@ -55,6 +55,7 @@
 - Data fetching + client state simplification: TanStack Query hooks and Zustand stores wired across meals/plans/grocery/auth.
 - Dashboard date selection: parse local date keys to avoid timezone shifts.
 - Auth cache refresh: update `auth.me` after login/register for immediate sidebar sync.
+- Auth session refresh: poll `/api/auth/refresh` every 30 minutes when signed in.
 
 ## Open Decisions
 - Ingredient modeling (DECIDED): store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.

@@ -1,6 +1,7 @@
 export const queryKeys = {
 	auth: {
 		me: ["auth", "me"] as const,
+		refresh: ["auth", "refresh"] as const,
 	},
 	meals: {
 		list: ["meals", "list"] as const,

@@ -26,6 +26,8 @@ export type WeekPlanResponse = {
 	meals: PlanMeal[];
 };
 
+type QuickEditPayload = Array<{ slotId: string; mealId: string | null }>;
+
 type GeneratePlanPayload = {
 	weekStart: string;
 	force: boolean;
@@ -70,6 +72,24 @@ export function useUpdateSlot() {
 			apiJson<{ slot: PlanSlot }>(`/api/plans/slots/${slotId}`, {
 				method: "PATCH",
 				body: JSON.stringify({ mealId }),
+			}),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: queryKeys.plans.week() });
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.grocery.week(),
+			});
+		},
+	});
+}
+
+export function useQuickEditSlots() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (updates: QuickEditPayload) =>
+			apiJson<{ slots: PlanSlot[] }>("/api/plans/quick-edit", {
+				method: "PATCH",
+				body: JSON.stringify({ updates }),
 			}),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: queryKeys.plans.week() });

@@ -4,6 +4,7 @@
 - Post-v1 polish: strengthen the weekly planning workflow and meal data quality.
 - Ship small improvements that keep the planner modular and easy to extend.
 - Optimize UI state ownership to reduce unnecessary re-renders across the app.
+- Evaluate API optimization opportunities (dedicated routes for multi-step flows).
 
 ### Definition of Done (Current Phase)
 - Planner navigation supports previous and future weeks in `/app/plans`.

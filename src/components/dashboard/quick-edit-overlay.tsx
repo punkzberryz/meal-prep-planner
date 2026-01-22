@@ -30,7 +30,7 @@ import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import {
 	type PlanMeal,
 	type PlanSlot,
-	useUpdateSlot,
+	useQuickEditSlots,
 	type WeekPlan,
 } from "@/lib/queries/plans";
 
@@ -54,7 +54,7 @@ export function QuickEditOverlay({
 	const [actionError, setActionError] = useState<string | null>(null);
 	const [draftLunchId, setDraftLunchId] = useState("");
 	const [draftDinnerId, setDraftDinnerId] = useState("");
-	const updateSlot = useUpdateSlot();
+	const quickEditSlots = useQuickEditSlots();
 	const isMobile = useMediaQuery("(max-width: 640px)");
 	const Root = isMobile ? Drawer : Dialog;
 	const Trigger = isMobile ? DrawerTrigger : DialogTrigger;
@@ -85,31 +85,29 @@ export function QuickEditOverlay({
 		if (!plan) return;
 		setActionError(null);
 		setIsSubmitting(true);
-		let updated = false;
+		const updates: Array<{ slotId: string; mealId: string | null }> = [];
 		try {
 			if (
 				selectedLunchSlot &&
 				draftLunchId !== (selectedLunchSlot.mealId ?? "")
 			) {
-				await updateSlot.mutateAsync({
+				updates.push({
 					slotId: selectedLunchSlot.id,
 					mealId: draftLunchId === "" ? null : draftLunchId,
 				});
-				updated = true;
 			}
 			if (
 				selectedDinnerSlot &&
 				draftDinnerId !== (selectedDinnerSlot.mealId ?? "")
 			) {
-				await updateSlot.mutateAsync({
+				updates.push({
 					slotId: selectedDinnerSlot.id,
 					mealId: draftDinnerId === "" ? null : draftDinnerId,
 				});
-				updated = true;
 			}
-			if (updated) {
-				toast.success("Meals updated.");
-			}
+			if (updates.length === 0) return;
+			await quickEditSlots.mutateAsync(updates);
+			toast.success("Meals updated.");
 		} catch (err) {
 			setActionError(
 				err instanceof Error ? err.message : "Failed to update meals.",

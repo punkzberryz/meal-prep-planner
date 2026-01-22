@@ -24,6 +24,7 @@
 - Break complex UI components into smaller, focused subcomponents for readability.
 - Prefer splitting large components into separate files; aim for ~200-300 lines per file when practical.
 - Keep UI state as local as possible; avoid lifting state unless sharing is required to prevent unnecessary re-renders.
+- Create dedicated API routes for multi-step UI flows to minimize round trips and speed up mutations.
 
 ## AI Agent Notes
 - Favor small, reversible changes.

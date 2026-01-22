@@ -35,6 +35,15 @@
 4. Cooking steps (v1)
    - Structured recipe steps with timers and servings.
 
+## Near-Term Additions
+1. Auth-aware marketing flow
+   - Redirect authenticated users away from `/login` and `/register`. (DONE)
+   - Swap the landing page "Sign in" CTA to "Go to app" when signed in. (DONE)
+2. App-wide UX scaffolding
+   - Add a not-found page.
+   - Add a global error boundary page.
+   - Add a loading UI page.
+
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
 - Asset integration: app hero, empty states (meals/plans/grocery), and loading accents wired into the UI.

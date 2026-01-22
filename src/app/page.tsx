@@ -3,8 +3,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { getSession } from "@/lib/session";
 
-export default function Home() {
+export default async function Home() {
+	const session = await getSession();
+	const isAuthed = Boolean(session);
+
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-background">
 			<div className="pointer-events-none absolute inset-0">
@@ -34,14 +38,18 @@ export default function Home() {
 				</div>
 				<div className="flex items-center gap-3">
 					<Button asChild variant="outline" className="border-border">
-						<Link href="/login">Sign in</Link>
+						<Link href={isAuthed ? "/app" : "/login"}>
+							{isAuthed ? "Go to app" : "Sign in"}
+						</Link>
 					</Button>
-					<Button
-						asChild
-						className="bg-primary text-primary-foreground hover:bg-primary/90"
-					>
-						<Link href="/register">Get started</Link>
-					</Button>
+					{!isAuthed ? (
+						<Button
+							asChild
+							className="bg-primary text-primary-foreground hover:bg-primary/90"
+						>
+							<Link href="/register">Get started</Link>
+						</Button>
+					) : null}
 				</div>
 			</header>
 
@@ -64,11 +72,15 @@ export default function Home() {
 								asChild
 								className="bg-primary text-primary-foreground hover:bg-primary/90"
 							>
-								<Link href="/register">Create your plan</Link>
+								<Link href={isAuthed ? "/app" : "/register"}>
+									{isAuthed ? "Go to app" : "Create your plan"}
+								</Link>
 							</Button>
-							<Button asChild variant="outline" className="border-border">
-								<Link href="/login">I already have an account</Link>
-							</Button>
+							{!isAuthed ? (
+								<Button asChild variant="outline" className="border-border">
+									<Link href="/login">I already have an account</Link>
+								</Button>
+							) : null}
 						</div>
 						<div className="flex flex-wrap gap-6 pt-4 text-sm text-muted-foreground">
 							<span>Default starter meals included</span>

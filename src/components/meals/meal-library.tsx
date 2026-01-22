@@ -1,6 +1,7 @@
 "use client";
 
 import { InfoIcon } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,7 +59,7 @@ function FieldHelp({ text }: { text: string }) {
 				<button
 					type="button"
 					aria-label="Field info"
-					className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-emerald-900/10 bg-white text-emerald-900/60 hover:bg-emerald-50 hover:text-emerald-900/80"
+					className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border bg-white text-muted-foreground hover:bg-accent/40 hover:text-foreground"
 				>
 					<InfoIcon className="h-4 w-4" />
 				</button>
@@ -222,9 +223,9 @@ export function MealLibrary() {
 
 	return (
 		<div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-			<Card className="border-emerald-900/10 bg-white/80">
+			<Card className="border-border bg-card/80">
 				<CardHeader className="flex flex-row items-center justify-between gap-3">
-					<CardTitle className="font-display text-xl text-emerald-950">
+					<CardTitle className="font-display text-xl text-foreground">
 						Your meals
 					</CardTitle>
 					<Button
@@ -237,17 +238,38 @@ export function MealLibrary() {
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{loadingList ? (
-						<div className="space-y-2">
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-10 w-full" />
+						<div className="relative overflow-hidden rounded-xl border border-border/60 bg-card/60 p-3">
+							<div
+								aria-hidden="true"
+								className="absolute inset-0 opacity-40"
+								style={{
+									backgroundImage:
+										"url('/assets/illustrations/loading-accent.webp')",
+									backgroundSize: "cover",
+									backgroundPosition: "center",
+								}}
+							/>
+							<div className="relative space-y-2">
+								<Skeleton className="h-10 w-full" />
+								<Skeleton className="h-10 w-full" />
+								<Skeleton className="h-10 w-full" />
+							</div>
 						</div>
 					) : (
 						<div className="space-y-2">
 							{meals.length === 0 ? (
-								<p className="text-sm text-emerald-900/70">
-									No meals yet. Create your first one on the right.
-								</p>
+								<div className="flex flex-col items-center gap-3 rounded-xl border border-border/60 bg-accent/20 p-4 text-center">
+									<Image
+										src="/assets/illustrations/empty-meals.webp"
+										alt="Empty meals illustration"
+										width={240}
+										height={240}
+										className="h-32 w-32"
+									/>
+									<p className="text-sm text-muted-foreground">
+										No meals yet. Create your first one on the right.
+									</p>
+								</div>
 							) : null}
 							{meals.map((meal) => (
 								<button
@@ -257,13 +279,13 @@ export function MealLibrary() {
 									className={[
 										"w-full rounded-lg border px-3 py-2 text-left transition",
 										selectedMealId === meal.id
-											? "border-emerald-900/25 bg-emerald-50"
-											: "border-emerald-900/10 bg-white hover:bg-emerald-50/50",
+											? "border-primary/30 bg-accent/40"
+											: "border-border bg-white hover:bg-accent/30",
 									].join(" ")}
 								>
 									<div className="flex items-center justify-between gap-3">
-										<p className="font-medium text-emerald-950">{meal.name}</p>
-										<span className="text-xs text-emerald-900/50">
+										<p className="font-medium text-foreground">{meal.name}</p>
+										<span className="text-xs text-muted-foreground">
 											{meal.tags.length ? meal.tags.join(", ") : "No tags"}
 										</span>
 									</div>
@@ -274,16 +296,16 @@ export function MealLibrary() {
 				</CardContent>
 			</Card>
 
-			<Card className="border-emerald-900/10 bg-white/80">
+			<Card className="border-border bg-card/80">
 				<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-					<CardTitle className="font-display text-xl text-emerald-950">
+					<CardTitle className="font-display text-xl text-foreground">
 						{selectedLabel}
 					</CardTitle>
 					<div className="flex items-center gap-2">
 						<Button
 							onClick={handleSave}
 							disabled={busy || !name.trim()}
-							className="bg-emerald-900 text-white hover:bg-emerald-800"
+							className="bg-primary text-primary-foreground hover:bg-primary/90"
 						>
 							Save
 						</Button>
@@ -298,7 +320,7 @@ export function MealLibrary() {
 				</CardHeader>
 				<CardContent className="space-y-5">
 					{error ? (
-						<div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+						<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
 							{error}
 						</div>
 					) : null}
@@ -324,7 +346,7 @@ export function MealLibrary() {
 						</div>
 						<textarea
 							id="meal-notes"
-							className="min-h-20 w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-sm text-emerald-950 shadow-sm focus:border-emerald-900/30 focus:outline-none focus:ring-2 focus:ring-emerald-900/10 disabled:opacity-50"
+							className="min-h-20 w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
 							value={notes}
 							onChange={(event) => setNotes(event.target.value)}
 							placeholder="Optional notes..."
@@ -357,7 +379,7 @@ export function MealLibrary() {
 						</div>
 						<textarea
 							id="meal-ingredients"
-							className="min-h-40 w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2 font-mono text-sm text-emerald-950 shadow-sm focus:border-emerald-900/30 focus:outline-none focus:ring-2 focus:ring-emerald-900/10 disabled:opacity-50"
+							className="min-h-40 w-full rounded-md border border-border bg-white px-3 py-2 font-mono text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
 							value={ingredientsText}
 							onChange={(event) => setIngredientsText(event.target.value)}
 							placeholder={"1 can chickpeas\n2 lemons\n1 cup quinoa"}

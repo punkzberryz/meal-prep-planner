@@ -8,7 +8,7 @@
 ### Definition of Done (Current Phase)
 - `/app` loads with a consistent sidebar layout and a dashboard landing page.
 - Auth checks are performed in each `/app` page server component (redirect when signed out).
-- Navigation structure is in place for upcoming sections (Meals, Planner, Grocery List).
+- Navigation structure is in place for upcoming sections (Meals, Planner, Grocery List), including a placeholder `/app/grocery` route.
 - Dashboard calendar scaffold renders a real week grid (can be empty) with a clear empty state.
 - UI is responsive and calm (no dense dashboard); guarded content is wrapped in `Suspense` (with skeletons) to avoid blocking.
 - Routes and component boundaries are set so wiring data later does not require rewrites.
@@ -37,6 +37,7 @@
 
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
+- Asset integration: app hero, empty states (meals/plans/grocery), and loading accents wired into the UI.
 
 ## Open Decisions
 - Ingredient modeling (DECIDED): store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.

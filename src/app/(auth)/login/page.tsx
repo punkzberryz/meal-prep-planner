@@ -51,7 +51,7 @@ export default function LoginPage() {
 	}
 
 	return (
-		<Card className="w-full max-w-md border-amber-200/60 bg-white/80 shadow-xl backdrop-blur">
+		<Card className="w-full max-w-md border-border bg-card/80 shadow-xl backdrop-blur">
 			<CardHeader className="space-y-2">
 				<CardTitle className="text-2xl">Welcome back</CardTitle>
 				<CardDescription>
@@ -80,7 +80,7 @@ export default function LoginPage() {
 							required
 						/>
 					</div>
-					{error ? <p className="text-sm text-red-600">{error}</p> : null}
+					{error ? <p className="text-sm text-destructive">{error}</p> : null}
 					<Button className="w-full" disabled={loading} type="submit">
 						{loading ? "Signing in..." : "Sign in"}
 					</Button>
@@ -88,7 +88,7 @@ export default function LoginPage() {
 				<p className="mt-6 text-sm text-muted-foreground">
 					New here?{" "}
 					<Link
-						className="font-medium text-amber-900 underline underline-offset-4"
+						className="font-medium text-primary underline underline-offset-4"
 						href="/register"
 					>
 						Create an account

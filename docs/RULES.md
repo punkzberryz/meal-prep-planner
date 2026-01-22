@@ -4,6 +4,9 @@
 - Keep weekly planning lightweight; avoid heavy setup steps.
 - Prefer calm, readable UI over dense dashboards.
 - Make grocery lists one-click and easy to share.
+- Visual tone: warm sunrise palette (apricot, coral, sunny yellow, mint, cream) with soft gradients and gentle depth.
+- Mood: friendly, cozy, and lightweight; emphasize calm meal planning rather than productivity pressure.
+- Typography and shapes: rounded surfaces, soft shadows, generous whitespace, and clear hierarchy.
 
 ## Engineering Rules
 - Use Next.js App Router patterns and TypeScript.

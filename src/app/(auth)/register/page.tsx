@@ -53,7 +53,7 @@ export default function RegisterPage() {
 	}
 
 	return (
-		<Card className="w-full max-w-md border-emerald-200/60 bg-white/80 shadow-xl backdrop-blur">
+		<Card className="w-full max-w-md border-border bg-card/80 shadow-xl backdrop-blur">
 			<CardHeader className="space-y-2">
 				<CardTitle className="text-2xl">Create your account</CardTitle>
 				<CardDescription>
@@ -89,7 +89,7 @@ export default function RegisterPage() {
 							Use at least 8 characters.
 						</p>
 					</div>
-					{error ? <p className="text-sm text-red-600">{error}</p> : null}
+					{error ? <p className="text-sm text-destructive">{error}</p> : null}
 					<Button className="w-full" disabled={loading} type="submit">
 						{loading ? "Creating account..." : "Create account"}
 					</Button>
@@ -97,7 +97,7 @@ export default function RegisterPage() {
 				<p className="mt-6 text-sm text-muted-foreground">
 					Already have an account?{" "}
 					<Link
-						className="font-medium text-emerald-900 underline underline-offset-4"
+						className="font-medium text-primary underline underline-offset-4"
 						href="/login"
 					>
 						Sign in

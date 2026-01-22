@@ -63,7 +63,7 @@ export function UserSection() {
 
 	return (
 		<div className="space-y-2 px-1">
-			<p className="text-xs uppercase tracking-[0.2em] text-emerald-100/70">
+			<p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
 				User
 			</p>
 			<SidebarMenu>
@@ -72,16 +72,16 @@ export function UserSection() {
 						<DropdownMenuTrigger asChild>
 							<SidebarMenuButton
 								size="lg"
-								className="gap-3 text-emerald-950 hover:bg-emerald-900/5"
+								className="gap-3 text-foreground hover:bg-accent/40"
 							>
-								<div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-900 text-sm font-semibold text-white">
+								<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
 									{initials}
 								</div>
 								<div className="flex flex-col text-left">
-									<span className="text-sm font-medium text-emerald-950">
+									<span className="text-sm font-medium text-foreground">
 										{displayName}
 									</span>
-									<span className="text-xs text-emerald-700">Account</span>
+									<span className="text-xs text-muted-foreground">Account</span>
 								</div>
 							</SidebarMenuButton>
 						</DropdownMenuTrigger>

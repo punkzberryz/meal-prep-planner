@@ -12,24 +12,24 @@ export default function AppDashboardPage() {
 			actions={
 				<Button
 					asChild
-					className="bg-emerald-900 text-white hover:bg-emerald-800"
+					className="bg-primary text-primary-foreground hover:bg-primary/90"
 				>
 					<Link href="/app/plans">Create plan</Link>
 				</Button>
 			}
 		>
 			<div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-				<Card className="border-emerald-900/10 bg-white/80">
+				<Card className="border-border bg-card/80">
 					<CardHeader className="flex flex-row items-center justify-between">
 						<div>
-							<CardTitle className="font-display text-xl text-emerald-950">
+							<CardTitle className="font-display text-xl text-foreground">
 								Meal calendar
 							</CardTitle>
-							<p className="text-sm text-emerald-900/70">
+							<p className="text-sm text-muted-foreground">
 								Pick a day to review or adjust your plan.
 							</p>
 						</div>
-						<span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-900">
+						<span className="rounded-full bg-accent/70 px-3 py-1 text-xs text-foreground">
 							Draft week
 						</span>
 					</CardHeader>
@@ -39,13 +39,13 @@ export default function AppDashboardPage() {
 				</Card>
 
 				<div className="space-y-6">
-					<Card className="border-amber-200/60 bg-white/85">
+					<Card className="border-accent/40 bg-card/85">
 						<CardHeader>
-							<CardTitle className="font-display text-lg text-amber-900">
+							<CardTitle className="font-display text-lg text-foreground">
 								Today’s plan
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-4 text-sm text-amber-950/80">
+						<CardContent className="space-y-4 text-sm text-foreground/80">
 							<div className="flex items-center justify-between">
 								<span>Lunch</span>
 								<span className="font-medium">Lemon tahini bowls</span>
@@ -54,19 +54,19 @@ export default function AppDashboardPage() {
 								<span>Dinner</span>
 								<span className="font-medium">Roasted veggie pasta</span>
 							</div>
-							<Button variant="outline" className="w-full border-amber-300">
+							<Button variant="outline" className="w-full border-border">
 								View cooking steps
 							</Button>
 						</CardContent>
 					</Card>
 
-					<Card className="border-emerald-900/10 bg-white/75">
+					<Card className="border-border bg-card/75">
 						<CardHeader>
-							<CardTitle className="font-display text-lg text-emerald-950">
+							<CardTitle className="font-display text-lg text-foreground">
 								Grocery list preview
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-3 text-sm text-emerald-900/70">
+						<CardContent className="space-y-3 text-sm text-muted-foreground">
 							<div className="flex items-center justify-between">
 								<span>Produce</span>
 								<span>Spinach, lemons, peppers</span>
@@ -79,7 +79,7 @@ export default function AppDashboardPage() {
 								<span>Pantry</span>
 								<span>Tahini, olive oil</span>
 							</div>
-							<Button variant="outline" className="w-full border-emerald-300">
+							<Button variant="outline" className="w-full border-border">
 								Export list
 							</Button>
 						</CardContent>

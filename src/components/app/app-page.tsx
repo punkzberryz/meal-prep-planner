@@ -15,14 +15,14 @@ export function AppPage({ title, subtitle, actions, children }: AppPageProps) {
 		<Suspense fallback={<AuthGuardFallback />}>
 			<AuthGuard>
 				<div className="min-h-svh">
-					<header className="flex flex-wrap items-center justify-between gap-4 border-b border-emerald-900/10 bg-white/70 px-6 py-4 backdrop-blur">
+					<header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-card/70 px-6 py-4 backdrop-blur">
 						<div className="flex items-center gap-3">
 							<SidebarTrigger />
 							<div>
 								{subtitle ? (
-									<p className="text-sm text-emerald-900/70">{subtitle}</p>
+									<p className="text-sm text-muted-foreground">{subtitle}</p>
 								) : null}
-								<h1 className="font-display text-2xl text-emerald-950">
+								<h1 className="font-display text-2xl text-foreground">
 									{title}
 								</h1>
 							</div>

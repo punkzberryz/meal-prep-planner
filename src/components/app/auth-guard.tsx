@@ -20,7 +20,7 @@ export async function AuthGuard({ children }: AuthGuardProps) {
 
 export function AuthGuardFallback() {
 	return (
-		<div className="flex min-h-[40vh] items-center justify-center text-sm text-emerald-900/70">
+		<div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
 			Checking your session...
 		</div>
 	);

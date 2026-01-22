@@ -32,8 +32,6 @@
    - Structured recipe steps with timers and servings.
 
 ## Near-Term Additions
-1. Auth-aware marketing flow (COMPLETED)
-2. App-wide UX scaffolding (COMPLETED)
 3. Dashboard scope (selected)
    - Today’s plan summary (lunch/dinner cards, quick edit).
    - Week snapshot (mini calendar or week grid with meal names).
@@ -43,6 +41,8 @@
 
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
+- Auth-aware marketing flow: redirect signed-in users away from `/login` and `/register`, swap landing CTA to "Go to app".
+- App-wide UX scaffolding: not-found, error boundary, and loading pages.
 - Asset integration: app hero, empty states (meals/plans/grocery), and loading accents wired into the UI.
 - Meal library (v1): CRUD for meals, ingredients, servings, tags.
 - Weekly planner (v1): week slots, rotation-based generation, slot edits.

@@ -25,3 +25,4 @@
 - Favor small, reversible changes.
 - Update `docs/PLANS.md` when roadmap shifts.
 - Run `pnpm format` and `pnpm lint` after making code changes.
+- Keep database inspection utilities in `scripts/` for local use only; do not import them into app code.

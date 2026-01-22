@@ -49,6 +49,7 @@
 - Grocery list (v1): aggregated ingredient list with one-click copy.
 - Data fetching + client state simplification: TanStack Query hooks and Zustand stores wired across meals/plans/grocery/auth.
 - Dashboard date selection: parse local date keys to avoid timezone shifts.
+- Dashboard quick edit: responsive dialog/drawer to update selected day meals.
 - Auth cache refresh: update `auth.me` after login/register for immediate sidebar sync.
 - Auth session refresh: poll `/api/auth/refresh` every 30 minutes when signed in.
 

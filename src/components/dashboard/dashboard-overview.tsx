@@ -2,16 +2,38 @@
 
 import { addDays, format, isWithinInterval, parse } from "date-fns";
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DayButton } from "react-day-picker";
 import { getDefaultClassNames } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+	Drawer,
+	DrawerClose,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWeekPlan } from "@/lib/queries/plans";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
+import { useUpdateSlot, useWeekPlan, type PlanSlot } from "@/lib/queries/plans";
 import { usePlannerUiStore } from "@/lib/stores/planner-ui";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +144,13 @@ function CalendarDayButton({
 export function DashboardOverview() {
 	const { data, isLoading, error } = useWeekPlan();
 	const { selectedDay, setSelectedDay } = usePlannerUiStore();
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [actionError, setActionError] = useState<string | null>(null);
+	const [draftLunchId, setDraftLunchId] = useState("");
+	const [draftDinnerId, setDraftDinnerId] = useState("");
+	const updateSlot = useUpdateSlot();
+	const isMobile = useMediaQuery("(max-width: 640px)");
 
 	const weekStartDate = useMemo(() => {
 		if (!data?.weekStart) return null;
@@ -139,6 +168,13 @@ export function DashboardOverview() {
 		setSelectedDay(toDateKey(nextSelected));
 	}, [weekStartDate, selectedDay, setSelectedDay]);
 
+	useEffect(() => {
+		if (!dialogOpen) {
+			setActionError(null);
+			setIsSubmitting(false);
+		}
+	}, [dialogOpen, selectedDay]);
+
 	const mealsByDay = useMemo(() => {
 		const map = new Map<string, MealByDay>();
 		for (const slot of data?.plan?.slots ?? []) {
@@ -151,9 +187,20 @@ export function DashboardOverview() {
 		return map;
 	}, [data?.plan?.slots]);
 
+	const slotsByDayType = useMemo(() => {
+		const map = new Map<string, PlanSlot>();
+		for (const slot of data?.plan?.slots ?? []) {
+			const key = `${toDateKey(new Date(slot.date))}:${slot.type}`;
+			map.set(key, slot);
+		}
+		return map;
+	}, [data?.plan?.slots]);
+
 	const selected = selectedDay ? fromDateKey(selectedDay) : undefined;
 	const selectedKey = selected ? toDateKey(selected) : null;
 	const selectedMeals = selectedKey ? mealsByDay.get(selectedKey) : undefined;
+	const meals = data?.meals ?? [];
+	const plan = data?.plan ?? null;
 
 	const weekDays = useMemo(() => {
 		if (!weekStartDate) return [];
@@ -161,6 +208,60 @@ export function DashboardOverview() {
 	}, [weekStartDate]);
 
 	const hasPlan = Boolean(data?.plan);
+	const selectedLunchSlot = selectedKey
+		? slotsByDayType.get(`${selectedKey}:LUNCH`)
+		: undefined;
+	const selectedDinnerSlot = selectedKey
+		? slotsByDayType.get(`${selectedKey}:DINNER`)
+		: undefined;
+
+	useEffect(() => {
+		setDraftLunchId(selectedLunchSlot?.mealId ?? "");
+		setDraftDinnerId(selectedDinnerSlot?.mealId ?? "");
+	}, [selectedLunchSlot?.mealId, selectedDinnerSlot?.mealId, selectedDay]);
+
+	const hasChanges =
+		(draftLunchId ?? "") !== (selectedLunchSlot?.mealId ?? "") ||
+		(draftDinnerId ?? "") !== (selectedDinnerSlot?.mealId ?? "");
+
+	async function handleUpdate() {
+		if (!plan) return;
+		setActionError(null);
+		setIsSubmitting(true);
+		try {
+			if (selectedLunchSlot && draftLunchId !== (selectedLunchSlot.mealId ?? "")) {
+				await updateSlot.mutateAsync({
+					slotId: selectedLunchSlot.id,
+					mealId: draftLunchId === "" ? null : draftLunchId,
+				});
+			}
+			if (
+				selectedDinnerSlot &&
+				draftDinnerId !== (selectedDinnerSlot.mealId ?? "")
+			) {
+				await updateSlot.mutateAsync({
+					slotId: selectedDinnerSlot.id,
+					mealId: draftDinnerId === "" ? null : draftDinnerId,
+				});
+			}
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to update meals.",
+			);
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+
+	const Root = isMobile ? Drawer : Dialog;
+	const Trigger = isMobile ? DrawerTrigger : DialogTrigger;
+	const Content = isMobile ? DrawerContent : DialogContent;
+	const Header = isMobile ? DrawerHeader : DialogHeader;
+	const Title = isMobile ? DrawerTitle : DialogTitle;
+	const Description = isMobile ? DrawerDescription : DialogDescription;
+	const Footer = isMobile ? DrawerFooter : DialogFooter;
+	const Close = isMobile ? DrawerClose : DialogClose;
+	const bodyClass = isMobile ? "space-y-4 px-4 pb-4" : "space-y-4";
 
 	if (isLoading) {
 		return (
@@ -284,9 +385,117 @@ export function DashboardOverview() {
 								{selectedMeals?.DINNER ?? "Unassigned"}
 							</span>
 						</div>
-						<Button asChild variant="outline" className="w-full border-border">
-							<Link href="/app/plans">Quick edit</Link>
-						</Button>
+						<Root open={dialogOpen} onOpenChange={setDialogOpen}>
+							<Trigger asChild>
+								<Button
+									variant="outline"
+									className="w-full border-border"
+									disabled={!selected}
+								>
+									Quick edit
+								</Button>
+							</Trigger>
+							<Content>
+								<Header>
+									<Title>Quick edit meals</Title>
+									<Description>
+										{selected
+											? `Update meals for ${format(selected, "EEE, MMM d")}.`
+											: "Select a day to edit meals."}
+									</Description>
+								</Header>
+								{actionError ? (
+									<div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+										{actionError}
+									</div>
+								) : null}
+								{!plan ? (
+									<div className="rounded-lg border border-accent/40 bg-accent/30 px-4 py-3 text-sm text-foreground/80">
+										Generate a weekly plan before editing meals.
+									</div>
+								) : null}
+								{plan && meals.length === 0 ? (
+									<div className="rounded-lg border border-accent/40 bg-accent/30 px-4 py-3 text-sm text-foreground/80">
+										Add meals to your library to update this day.
+									</div>
+								) : null}
+								<div className={bodyClass}>
+									<div className="space-y-2">
+										<Label htmlFor="quick-edit-lunch">Lunch</Label>
+										<select
+											id="quick-edit-lunch"
+											className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+											disabled={
+												!plan ||
+												!selectedLunchSlot ||
+												isSubmitting
+											}
+											value={draftLunchId}
+											onChange={(event) => setDraftLunchId(event.target.value)}
+										>
+											<option value="">Unassigned</option>
+											{meals.map((meal) => (
+												<option key={meal.id} value={meal.id}>
+													{meal.name}
+												</option>
+											))}
+										</select>
+										{plan && !selectedLunchSlot ? (
+											<p className="text-xs text-muted-foreground">
+												No lunch slot generated for this day.
+											</p>
+										) : null}
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="quick-edit-dinner">Dinner</Label>
+										<select
+											id="quick-edit-dinner"
+											className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+											disabled={
+												!plan ||
+												!selectedDinnerSlot ||
+												isSubmitting
+											}
+											value={draftDinnerId}
+											onChange={(event) => setDraftDinnerId(event.target.value)}
+										>
+											<option value="">Unassigned</option>
+											{meals.map((meal) => (
+												<option key={meal.id} value={meal.id}>
+													{meal.name}
+												</option>
+											))}
+										</select>
+										{plan && !selectedDinnerSlot ? (
+											<p className="text-xs text-muted-foreground">
+												No dinner slot generated for this day.
+											</p>
+										) : null}
+									</div>
+								</div>
+								<Footer>
+									<Button asChild variant="ghost">
+										<Link href="/app/plans">Open planner</Link>
+									</Button>
+									<Button
+										onClick={handleUpdate}
+										disabled={!plan || !hasChanges || isSubmitting}
+									>
+										{isSubmitting ? (
+											<span className="inline-flex items-center gap-2">
+												<span className="inline-flex size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+												Updating
+											</span>
+										) : (
+											"Update"
+										)}
+									</Button>
+									<Close asChild>
+										<Button variant="outline">Done</Button>
+									</Close>
+								</Footer>
+							</Content>
+						</Root>
 					</CardContent>
 				</Card>
 

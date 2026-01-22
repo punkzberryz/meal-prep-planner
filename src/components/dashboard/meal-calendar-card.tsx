@@ -1,3 +1,4 @@
+import { addDays, format, isWithinInterval } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDayButton } from "./calendar-day-button";
@@ -16,6 +17,20 @@ export function MealCalendarCard({
 	selected: Date | undefined;
 	weekStartDate: Date | null;
 }) {
+	const weekRangeLabel = weekStartDate
+		? `${format(weekStartDate, "MMM d")} \u2013 ${format(
+				addDays(weekStartDate, 6),
+				"MMM d",
+			)}`
+		: null;
+	const inWeek = weekStartDate
+		? (date: Date) =>
+				isWithinInterval(date, {
+					start: weekStartDate,
+					end: addDays(weekStartDate, 6),
+				})
+		: undefined;
+
 	return (
 		<Card className="border-border bg-card/80">
 			<CardHeader className="flex flex-row items-center justify-between">
@@ -24,7 +39,9 @@ export function MealCalendarCard({
 						Meal calendar
 					</CardTitle>
 					<p className="text-sm text-muted-foreground">
-						Select a day to review lunches and dinners.
+						{weekRangeLabel
+							? `Week of ${weekRangeLabel}. Select a day to review lunches and dinners.`
+							: "Select a day to review lunches and dinners."}
 					</p>
 				</div>
 				<span className="rounded-full bg-accent/70 px-3 py-1 text-xs text-foreground">
@@ -39,6 +56,7 @@ export function MealCalendarCard({
 					defaultMonth={weekStartDate ?? undefined}
 					className="[--cell-size:--spacing(14)]"
 					classNames={{ day: "overflow-hidden" }}
+					modifiers={inWeek ? { inWeek } : undefined}
 					components={{
 						DayButton: (props) => (
 							<CalendarDayButton {...props} mealsByDay={mealsByDay} />

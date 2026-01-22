@@ -41,9 +41,10 @@
 - Data fetching + client state simplification: TanStack Query hooks and Zustand stores wired across meals/plans/grocery/auth.
 - Dashboard date selection: parse local date keys to avoid timezone shifts.
 - Dashboard quick edit: responsive dialog/drawer to update selected day meals.
-- Dashboard enhancements: today summary card, week snapshot, grocery list preview, and meal labels in calendar.
+- Dashboard enhancements: selected day summary card, week snapshot, grocery list preview, and meal labels in calendar.
+- Dashboard calendar: week range label and in-week day highlight for clarity.
 - Auth cache refresh: update `auth.me` after login/register for immediate sidebar sync.
 - Auth session refresh: poll `/api/auth/refresh` every 30 minutes when signed in.
 
-## Open Decisions
-- Ingredient modeling (DECIDED): store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.
+## Decisions (Closed)
+- Ingredient modeling: store a required free-text ingredient line, with optional structured fields (`name`, `qty`, `unit`) for future aggregation/parsing.

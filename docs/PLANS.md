@@ -29,8 +29,8 @@
    - Keep the planner logic isolated behind a small API/helper surface for iteration.
 
 3. Grocery list (v1)
-   - Aggregate ingredients from the weekly plan into a single list.
-   - One-click copy/share (keep UX lightweight).
+   - Aggregate ingredients from the weekly plan into a single list. (DONE)
+   - One-click copy/share (keep UX lightweight). (DONE)
 
 4. Cooking steps (v1)
    - Structured recipe steps with timers and servings.

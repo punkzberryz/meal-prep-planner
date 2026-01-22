@@ -6,6 +6,11 @@ datasource db {
   provider = "sqlite"
 }
 
+enum MealSlotType {
+  LUNCH
+  DINNER
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
@@ -14,6 +19,9 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   sessions     Session[]
+  meals        Meal[]
+  tags         Tag[]
+  weeklyPlans  WeeklyPlan[]
 }
 
 model Session {
@@ -26,4 +34,101 @@ model Session {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+model Meal {
+  id            String           @id @default(cuid())
+  userId        String
+  name          String
+  notes         String?
+  servings      Int?
+  lastPlannedAt DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id])
+  ingredients   MealIngredient[]
+  mealTags      MealTag[]
+  planSlots     PlanSlot[]
+
+  @@index([userId])
+  @@index([name])
+}
+
+model MealIngredient {
+  id       String  @id @default(cuid())
+  mealId   String
+  position Int
+  text     String
+
+  // Optional structured fields for aggregation/parsing; keep qty as text for flexibility (e.g., "1 1/2").
+  name String?
+  qty  String?
+  unit String?
+
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  @@index([mealId])
+  @@index([name])
+  @@unique([mealId, position])
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  userId String
+
+  // `valueKey` is a normalized, case-insensitive key for uniqueness and fast lookup.
+  value    String
+  valueKey String
+
+  user     User     @relation(fields: [userId], references: [id])
+  mealTags MealTag[]
+
+  @@index([userId])
+  @@index([value])
+  @@index([valueKey])
+  @@unique([userId, valueKey])
+}
+
+model MealTag {
+  mealId String
+  tagId  String
+
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([mealId, tagId])
+  @@index([tagId])
+}
+
+model WeeklyPlan {
+  id          String     @id @default(cuid())
+  userId      String
+  weekStart   DateTime
+  generatedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id])
+  slots       PlanSlot[]
+
+  @@unique([userId, weekStart])
+  @@index([userId])
+  @@index([weekStart])
+}
+
+model PlanSlot {
+  id           String       @id @default(cuid())
+  planId       String
+  date         DateTime
+  type         MealSlotType
+  mealId       String?
+  overriddenAt DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  plan         WeeklyPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  meal         Meal?        @relation(fields: [mealId], references: [id], onDelete: SetNull)
+
+  @@unique([planId, date, type])
+  @@index([planId])
+  @@index([mealId])
+  @@index([date])
 }

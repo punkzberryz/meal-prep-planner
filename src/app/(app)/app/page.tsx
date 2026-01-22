@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppPage } from "@/components/app/app-page";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -9,8 +10,11 @@ export default function AppDashboardPage() {
 			title="Your weekly prep dashboard"
 			subtitle="Welcome back"
 			actions={
-				<Button className="bg-emerald-900 text-white hover:bg-emerald-800">
-					Create plan
+				<Button
+					asChild
+					className="bg-emerald-900 text-white hover:bg-emerald-800"
+				>
+					<Link href="/app/plans">Create plan</Link>
 				</Button>
 			}
 		>

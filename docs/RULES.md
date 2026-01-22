@@ -10,6 +10,7 @@
 - Store auth sessions in SQLite via Prisma.
 - Keep auth tokens httpOnly and short-lived (rotate via DB sessions).
 - Add new data models in `prisma/schema.prisma` with clear relations.
+- After changing `prisma/schema.prisma`, run `pnpm prisma generate` and create/apply a migration (`pnpm prisma migrate dev`), then restart `pnpm dev` to pick up the new Prisma client.
 - Use Biome for linting and formatting (`pnpm lint`, `pnpm format`).
 - Use Vitest for tests (`pnpm test`, `pnpm test:watch`).
 - Place authenticated routes under `src/app/(app)/app/**` (e.g., `/app`, `/app/meals`).

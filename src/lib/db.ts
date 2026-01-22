@@ -14,11 +14,25 @@ if (!databaseUrl.startsWith("file:") && databaseUrl !== ":memory:") {
 
 const adapter = new PrismaBetterSqlite3({ url: databaseUrl });
 
-export const prisma =
-	globalForPrisma.prisma ??
-	new PrismaClient({
+function createPrismaClient() {
+	return new PrismaClient({
 		adapter,
 		log: ["error", "warn"],
 	});
+}
+
+function isStaleClient(client: PrismaClient) {
+	// In dev, hot-reloading can keep an old PrismaClient instance around in globalThis
+	// even after running migrations/generate. Detect missing delegates and recreate.
+	return (
+		typeof (client as unknown as { weeklyPlan?: unknown }).weeklyPlan ===
+		"undefined"
+	);
+}
+
+export const prisma =
+	globalForPrisma.prisma && !isStaleClient(globalForPrisma.prisma)
+		? globalForPrisma.prisma
+		: createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

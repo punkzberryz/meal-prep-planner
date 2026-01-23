@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest) {
 	const slotIds = updates.map((update) => update.slotId);
 	const slots = await prisma.planSlot.findMany({
 		where: { id: { in: slotIds } },
-		include: { plan: true },
+		include: { plan: true, meal: { select: { id: true, name: true } } },
 	});
 
 	if (slots.length !== updates.length) {

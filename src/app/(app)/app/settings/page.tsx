@@ -1,9 +1,14 @@
 import { AppPage } from "@/components/app/app-page";
+import { SettingsPageFallback } from "@/components/app/app-page-fallbacks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SettingsPage() {
 	return (
-		<AppPage title="Settings" subtitle="Account">
+		<AppPage
+			title="Settings"
+			subtitle="Account"
+			fallback={<SettingsPageFallback />}
+		>
 			<Card className="border-border bg-card/80">
 				<CardHeader>
 					<CardTitle className="font-display text-xl text-foreground">

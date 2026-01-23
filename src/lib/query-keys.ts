@@ -8,10 +8,12 @@ export const queryKeys = {
 		detail: (mealId: string) => ["meals", "detail", mealId] as const,
 	},
 	plans: {
+		weekBase: ["plans", "week"] as const,
 		week: (weekStart?: string | null) =>
 			["plans", "week", weekStart ?? "current"] as const,
 	},
 	grocery: {
+		weekBase: ["grocery", "week"] as const,
 		week: (weekStart?: string | null) =>
 			["grocery", "week", weekStart ?? "current"] as const,
 	},

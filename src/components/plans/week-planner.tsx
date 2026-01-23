@@ -1,11 +1,12 @@
 "use client";
 
-import { addDays, format } from "date-fns";
+import { addDays, addWeeks, format } from "date-fns";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getWeekStart } from "@/lib/planner/week";
 import {
 	type PlanMeal,
 	type PlanSlot,
@@ -15,46 +16,48 @@ import {
 	type WeekPlan,
 } from "@/lib/queries/plans";
 
-function toWeekStartParam(weekStartIso: string) {
-	const date = new Date(weekStartIso);
-	return format(date, "yyyy-MM-dd");
-}
-
 function slotLabel(type: PlanSlot["type"]) {
 	return type === "LUNCH" ? "Lunch" : "Dinner";
+}
+
+function getWeekStartParam(date: Date) {
+	return format(getWeekStart(date), "yyyy-MM-dd");
 }
 
 export function WeekPlanner() {
 	const [busySlotId, setBusySlotId] = useState<string | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
-	const { data, isLoading, error } = useWeekPlan();
+	const currentWeekStartParam = getWeekStartParam(new Date());
+	const [weekStartParam, setWeekStartParam] = useState(currentWeekStartParam);
+	const { data, isLoading, error } = useWeekPlan(weekStartParam);
 	const generatePlan = useGeneratePlan();
 	const updateSlot = useUpdateSlot();
 
-	const weekStart = data?.weekStart ?? null;
 	const plan: WeekPlan | null = data?.plan ?? null;
 	const meals: PlanMeal[] = data?.meals ?? [];
+	const weekStartDate = useMemo(
+		() => new Date(`${weekStartParam}T00:00:00`),
+		[weekStartParam],
+	);
 
 	const days = useMemo(() => {
-		if (!weekStart) return [];
-		const start = new Date(weekStart);
-		return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-	}, [weekStart]);
+		return Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
+	}, [weekStartDate]);
 
 	const slotsByKey = useMemo(() => {
 		const map = new Map<string, PlanSlot>();
 		for (const slot of plan?.slots ?? []) {
-			map.set(`${slot.date}:${slot.type}`, slot);
+			const dateKey = slot.date.split("T")[0] ?? slot.date;
+			map.set(`${dateKey}:${slot.type}`, slot);
 		}
 		return map;
 	}, [plan]);
 
 	async function handleGenerate(force: boolean) {
-		if (!weekStart) return;
 		setActionError(null);
 		try {
 			await generatePlan.mutateAsync({
-				weekStart: toWeekStartParam(weekStart),
+				weekStart: weekStartParam,
 				force,
 			});
 		} catch (err) {
@@ -63,6 +66,20 @@ export function WeekPlanner() {
 			);
 		}
 	}
+
+	function handleWeekChange(nextWeekStart: string) {
+		setWeekStartParam(nextWeekStart);
+	}
+
+	const isCurrentWeek = weekStartParam === currentWeekStartParam;
+	const previousWeekParam = useMemo(
+		() => format(addWeeks(weekStartDate, -1), "yyyy-MM-dd"),
+		[weekStartDate],
+	);
+	const nextWeekParam = useMemo(
+		() => format(addWeeks(weekStartDate, 1), "yyyy-MM-dd"),
+		[weekStartDate],
+	);
 
 	async function handleSlotChange(slotId: string, nextMealId: string) {
 		setBusySlotId(slotId);
@@ -133,24 +150,38 @@ export function WeekPlanner() {
 					</CardTitle>
 					<p className="text-sm text-muted-foreground">{titleRange}</p>
 				</div>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							onClick={() => handleWeekChange(previousWeekParam)}
+						>
+							Prev week
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => handleWeekChange(currentWeekStartParam)}
+							disabled={isCurrentWeek}
+						>
+							This week
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => handleWeekChange(nextWeekParam)}
+						>
+							Next week
+						</Button>
+					</div>
 					<Button
 						disabled={!hasMeals || busyGenerate}
-						onClick={() => handleGenerate(false)}
-						className="bg-primary text-primary-foreground hover:bg-primary/90"
-					>
-						{hasPlan ? "Generate again" : "Generate plan"}
-					</Button>
-					<Button
-						variant="outline"
-						disabled={!hasPlan || busyGenerate}
 						onClick={() => {
 							if (!window.confirm("Overwrite any overrides and regenerate?"))
 								return;
 							handleGenerate(true);
 						}}
+						className="bg-primary text-primary-foreground hover:bg-primary/90"
 					>
-						Regenerate (force)
+						{hasPlan ? "Generate again" : "Generate plan"}
 					</Button>
 				</div>
 			</CardHeader>
@@ -196,17 +227,20 @@ export function WeekPlanner() {
 								<th className="sticky left-0 z-10 w-28 bg-card/80 px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground">
 									Slot
 								</th>
-								{days.map((day) => (
-									<th
-										key={day.toISOString()}
-										className="px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground"
-									>
-										<div>{format(day, "EEE")}</div>
-										<div className="text-[11px] tracking-[0.12em]">
-											{format(day, "MMM d")}
-										</div>
-									</th>
-								))}
+								{days.map((day) => {
+									const dayKey = day.toISOString().split("T")[0] ?? "";
+									return (
+										<th
+											key={dayKey}
+											className="px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground"
+										>
+											<div>{format(day, "EEE")}</div>
+											<div className="text-[11px] tracking-[0.12em]">
+												{format(day, "MMM d")}
+											</div>
+										</th>
+									);
+								})}
 							</tr>
 						</thead>
 						<tbody>
@@ -216,7 +250,8 @@ export function WeekPlanner() {
 										{slotLabel(type)}
 									</td>
 									{days.map((day) => {
-										const key = `${day.toISOString()}:${type}`;
+										const dayKey = day.toISOString().split("T")[0] ?? "";
+										const key = `${dayKey}:${type}`;
 										const slot = slotsByKey.get(key);
 										return (
 											<td key={key} className="px-3 py-3 align-top">

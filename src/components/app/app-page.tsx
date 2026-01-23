@@ -7,12 +7,24 @@ type AppPageProps = {
 	title: string;
 	subtitle?: string;
 	actions?: ReactNode;
+	fallback?: ReactNode;
+	suspenseKey?: string;
 	children: ReactNode;
 };
 
-export function AppPage({ title, subtitle, actions, children }: AppPageProps) {
+export function AppPage({
+	title,
+	subtitle,
+	actions,
+	fallback,
+	suspenseKey,
+	children,
+}: AppPageProps) {
 	return (
-		<Suspense fallback={<AuthGuardFallback />}>
+		<Suspense
+			key={suspenseKey ?? title}
+			fallback={fallback ?? <AuthGuardFallback />}
+		>
 			<AuthGuard>
 				<div className="min-h-svh">
 					<header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-card/70 px-6 py-4 backdrop-blur">

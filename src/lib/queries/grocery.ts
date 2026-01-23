@@ -19,9 +19,14 @@ export type GroceryResponse = {
 	items: GroceryItem[];
 };
 
-export function useGroceryList() {
+export function useGroceryList(weekStart?: string | null) {
 	return useQuery({
-		queryKey: queryKeys.grocery.week(),
-		queryFn: () => apiJson<GroceryResponse>("/api/grocery"),
+		queryKey: queryKeys.grocery.week(weekStart),
+		queryFn: () =>
+			apiJson<GroceryResponse>(
+				weekStart
+					? `/api/grocery?weekStart=${encodeURIComponent(weekStart)}`
+					: "/api/grocery",
+			),
 	});
 }

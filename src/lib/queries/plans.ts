@@ -33,10 +33,15 @@ type GeneratePlanPayload = {
 	force: boolean;
 };
 
-export function useWeekPlan() {
+export function useWeekPlan(weekStart?: string | null) {
 	return useQuery({
-		queryKey: queryKeys.plans.week(),
-		queryFn: () => apiJson<WeekPlanResponse>("/api/plans/week"),
+		queryKey: queryKeys.plans.week(weekStart),
+		queryFn: () =>
+			apiJson<WeekPlanResponse>(
+				weekStart
+					? `/api/plans/week?weekStart=${encodeURIComponent(weekStart)}`
+					: "/api/plans/week",
+			),
 	});
 }
 
@@ -50,9 +55,11 @@ export function useGeneratePlan() {
 				body: JSON.stringify(payload),
 			}),
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: queryKeys.plans.week() });
 			void queryClient.invalidateQueries({
-				queryKey: queryKeys.grocery.week(),
+				queryKey: queryKeys.plans.weekBase,
+			});
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.grocery.weekBase,
 			});
 		},
 	});
@@ -74,9 +81,11 @@ export function useUpdateSlot() {
 				body: JSON.stringify({ mealId }),
 			}),
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: queryKeys.plans.week() });
 			void queryClient.invalidateQueries({
-				queryKey: queryKeys.grocery.week(),
+				queryKey: queryKeys.plans.weekBase,
+			});
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.grocery.weekBase,
 			});
 		},
 	});
@@ -92,9 +101,11 @@ export function useQuickEditSlots() {
 				body: JSON.stringify({ updates }),
 			}),
 		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: queryKeys.plans.week() });
 			void queryClient.invalidateQueries({
-				queryKey: queryKeys.grocery.week(),
+				queryKey: queryKeys.plans.weekBase,
+			});
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.grocery.weekBase,
 			});
 		},
 	});

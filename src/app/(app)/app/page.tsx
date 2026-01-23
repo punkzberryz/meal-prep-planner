@@ -1,10 +1,19 @@
+import { addWeeks, format } from "date-fns";
 import Link from "next/link";
 import { AppPage } from "@/components/app/app-page";
 import { DashboardPageFallback } from "@/components/app/app-page-fallbacks";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { Button } from "@/components/ui/button";
+import { getWeekStart } from "@/lib/planner/week";
 
 export default function AppDashboardPage() {
+	const currentWeekStart = getWeekStart(new Date());
+	const previousWeekStart = format(
+		addWeeks(currentWeekStart, -1),
+		"yyyy-MM-dd",
+	);
+	const nextWeekStart = format(addWeeks(currentWeekStart, 1), "yyyy-MM-dd");
+
 	return (
 		<AppPage
 			title="Your weekly prep dashboard"
@@ -13,10 +22,14 @@ export default function AppDashboardPage() {
 			actions={
 				<div className="flex items-center gap-2">
 					<Button asChild variant="outline" className="border-border">
-						<Link href="/app/plans">Previous week</Link>
+						<Link href={`/app/plans?weekStart=${previousWeekStart}`}>
+							Previous week
+						</Link>
 					</Button>
 					<Button asChild variant="outline" className="border-border">
-						<Link href="/app/plans">Next week</Link>
+						<Link href={`/app/plans?weekStart=${nextWeekStart}`}>
+							Next week
+						</Link>
 					</Button>
 					<Button
 						asChild

@@ -2,7 +2,7 @@
 
 import { addDays, addWeeks, format } from "date-fns";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,11 +24,30 @@ function getWeekStartParam(date: Date) {
 	return format(getWeekStart(date), "yyyy-MM-dd");
 }
 
-export function WeekPlanner() {
+function normalizeWeekStartParam(value: string | null | undefined) {
+	if (!value) return null;
+	const parsed = new Date(`${value}T00:00:00`);
+	if (Number.isNaN(parsed.getTime())) return null;
+	return getWeekStartParam(parsed);
+}
+
+type WeekPlannerProps = {
+	initialWeekStart?: string | null;
+};
+
+export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 	const [busySlotId, setBusySlotId] = useState<string | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
 	const currentWeekStartParam = getWeekStartParam(new Date());
-	const [weekStartParam, setWeekStartParam] = useState(currentWeekStartParam);
+	const [weekStartParam, setWeekStartParam] = useState(() => {
+		return normalizeWeekStartParam(initialWeekStart) ?? currentWeekStartParam;
+	});
+
+	useEffect(() => {
+		const normalized =
+			normalizeWeekStartParam(initialWeekStart) ?? currentWeekStartParam;
+		setWeekStartParam(normalized);
+	}, [initialWeekStart, currentWeekStartParam]);
 	const { data, isLoading, error } = useWeekPlan(weekStartParam);
 	const generatePlan = useGeneratePlan();
 	const updateSlot = useUpdateSlot();

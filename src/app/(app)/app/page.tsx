@@ -4,6 +4,14 @@ import { AppPage } from "@/components/app/app-page";
 import { DashboardPageFallback } from "@/components/app/app-page-fallbacks";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getWeekStart } from "@/lib/planner/week";
 
 export default function AppDashboardPage() {
@@ -20,24 +28,33 @@ export default function AppDashboardPage() {
 			subtitle="Welcome back"
 			fallback={<DashboardPageFallback />}
 			actions={
-				<div className="flex items-center gap-2">
-					<Button asChild variant="outline" className="border-border">
-						<Link href={`/app/plans?weekStart=${previousWeekStart}`}>
-							Previous week
-						</Link>
-					</Button>
-					<Button asChild variant="outline" className="border-border">
-						<Link href={`/app/plans?weekStart=${nextWeekStart}`}>
-							Next week
-						</Link>
-					</Button>
-					<Button
-						asChild
-						className="bg-primary text-primary-foreground hover:bg-primary/90"
-					>
-						<Link href="/app/plans">Create plan</Link>
-					</Button>
-				</div>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+							Plans
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-48">
+						<DropdownMenuLabel>Jump to week</DropdownMenuLabel>
+						<DropdownMenuItem asChild>
+							<Link href={`/app/plans?weekStart=${previousWeekStart}`}>
+								Previous week
+							</Link>
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<Link href="/app/plans">This week</Link>
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<Link href={`/app/plans?weekStart=${nextWeekStart}`}>
+								Next week
+							</Link>
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem asChild>
+							<Link href="/app/plans">Create plan</Link>
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 			}
 		>
 			<DashboardOverview />

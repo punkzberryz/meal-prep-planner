@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getWeekStart } from "@/lib/planner/week";
@@ -19,7 +19,7 @@ function parseWeekStart(value: string | undefined) {
 	return getWeekStart(parsed);
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
 	const session = await getSession();
 	if (!session) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

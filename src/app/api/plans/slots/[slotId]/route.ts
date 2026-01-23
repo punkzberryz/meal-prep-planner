@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -10,17 +10,18 @@ const PatchBodySchema = z.object({
 });
 
 export async function PATCH(
-	request: Request,
+	request: NextRequest,
 	{ params }: { params: Promise<{ slotId: string }> },
 ) {
-	const session = await getSession();
+	const [session, { slotId }, body] = await Promise.all([
+		getSession(),
+		params,
+		request.json().catch(() => null),
+	]);
+
 	if (!session) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
-
-	const { slotId } = await params;
-
-	const body = await request.json().catch(() => null);
 	const parsedBody = PatchBodySchema.safeParse(body);
 	if (!parsedBody.success) {
 		return NextResponse.json({ error: "Invalid body" }, { status: 400 });
@@ -47,23 +48,28 @@ export async function PATCH(
 	}
 
 	const updated = await prisma.$transaction(async (tx) => {
-		const next = await tx.planSlot.update({
-			where: { id: slotId },
-			data: {
-				mealId,
-				overriddenAt: new Date(),
-			},
-			include: { meal: { select: { id: true, name: true } } },
-		});
+		const updateSlot = () =>
+			tx.planSlot.update({
+				where: { id: slotId },
+				data: {
+					mealId,
+					overriddenAt: new Date(),
+				},
+				include: { meal: { select: { id: true, name: true } } },
+			});
 
 		if (mealId) {
-			await tx.meal.updateMany({
-				where: { id: mealId, userId: session.userId },
-				data: { lastPlannedAt: next.date },
-			});
+			const [next] = await Promise.all([
+				updateSlot(),
+				tx.meal.updateMany({
+					where: { id: mealId, userId: session.userId },
+					data: { lastPlannedAt: slot.date },
+				}),
+			]);
+			return next;
 		}
 
-		return next;
+		return updateSlot();
 	});
 
 	return NextResponse.json({

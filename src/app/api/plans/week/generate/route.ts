@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { pickRotationMeals } from "@/lib/planner/rotation";
@@ -19,7 +19,7 @@ function parseWeekStart(value: string | undefined) {
 	return getWeekStart(parsed);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
 	const session = await getSession();
 	if (!session) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -135,11 +135,16 @@ export async function POST(request: Request) {
 			}
 		}
 
-		for (const [mealId, lastPlannedAt] of mealLastPlannedById.entries()) {
-			await tx.meal.updateMany({
-				where: { id: mealId, userId: session.userId },
-				data: { lastPlannedAt },
-			});
+		if (mealLastPlannedById.size > 0) {
+			await Promise.all(
+				Array.from(mealLastPlannedById.entries()).map(
+					([mealId, lastPlannedAt]) =>
+						tx.meal.updateMany({
+							where: { id: mealId, userId: session.userId },
+							data: { lastPlannedAt },
+						}),
+				),
+			);
 		}
 
 		return tx.weeklyPlan.findUniqueOrThrow({

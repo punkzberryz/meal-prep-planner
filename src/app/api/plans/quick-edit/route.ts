@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -16,7 +16,7 @@ const QuickEditSchema = z.object({
 		.min(1),
 });
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
 	const session = await getSession();
 	if (!session) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

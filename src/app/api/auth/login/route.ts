@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SESSION_COOKIE_NAME, signAuthToken } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -12,7 +12,7 @@ const LoginSchema = z.object({
 	password: z.string().min(1),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
 	const body = await request.json().catch(() => null);
 	const parsed = LoginSchema.safeParse(body);
 

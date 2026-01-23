@@ -11,8 +11,7 @@
 
 ## Engineering Rules
 - Use Next.js App Router patterns and TypeScript.
-- Store auth sessions in SQLite via Prisma.
-- Keep auth tokens httpOnly and short-lived (rotate via DB sessions).
+- Store auth sessions in SQLite via Prisma; keep auth tokens httpOnly and short-lived (rotate via DB sessions and refresh API).
 - Add new data models in `prisma/schema.prisma` with clear relations.
 - After changing `prisma/schema.prisma`, run `pnpm prisma generate` and create/apply a migration (`pnpm prisma migrate dev`), then restart `pnpm dev` to pick up the new Prisma client.
 - Use Biome for linting and formatting (`pnpm lint`, `pnpm format`).
@@ -21,10 +20,10 @@
 - Use Zustand for client-side state management.
 - Use TanStack Query for data fetching and caching.
 - Perform auth checks in each `/app` page server component (async) and wrap guarded content in `Suspense` to avoid blocking UI while loading.
-- Break complex UI components into smaller, focused subcomponents for readability.
-- Prefer splitting large components into separate files; aim for ~200-300 lines per file when practical.
+- Keep components small and focused; split files around ~200-300 lines when practical.
 - Keep UI state as local as possible; avoid lifting state unless sharing is required to prevent unnecessary re-renders.
 - Create dedicated API routes for multi-step UI flows to minimize round trips and speed up mutations.
+- Parallelize independent async operations with `Promise.all` only when there are no data dependencies (including within transactions).
 
 ## AI Agent Notes
 - Favor small, reversible changes.

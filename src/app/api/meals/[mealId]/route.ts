@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -49,7 +49,7 @@ function toMealResponse(meal: {
 }
 
 export async function GET(
-	_request: Request,
+	_request: NextRequest,
 	{ params }: { params: Promise<{ mealId: string }> },
 ) {
 	const session = await getSession();
@@ -92,7 +92,7 @@ export async function GET(
 }
 
 export async function PATCH(
-	request: Request,
+	request: NextRequest,
 	{ params }: { params: Promise<{ mealId: string }> },
 ) {
 	const session = await getSession();
@@ -213,7 +213,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-	_request: Request,
+	_request: NextRequest,
 	{ params }: { params: Promise<{ mealId: string }> },
 ) {
 	const session = await getSession();

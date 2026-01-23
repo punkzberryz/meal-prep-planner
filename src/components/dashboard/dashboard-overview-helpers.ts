@@ -1,4 +1,4 @@
-import { format, parse } from "date-fns";
+import { fromDateKey, toDateKey } from "@/lib/date-keys";
 
 export type MealByDay = {
 	LUNCH?: string | null;
@@ -14,10 +14,4 @@ export function getMealColor(name: string) {
 	return "cream";
 }
 
-export function toDateKey(date: Date) {
-	return format(date, "yyyy-MM-dd");
-}
-
-export function fromDateKey(value: string) {
-	return parse(value, "yyyy-MM-dd", new Date());
-}
+export { toDateKey, fromDateKey };

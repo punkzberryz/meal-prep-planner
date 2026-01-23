@@ -1,11 +1,14 @@
 "use client";
 
-import { addDays, addWeeks, format } from "date-fns";
+import { addDays, addWeeks, format, isWithinInterval } from "date-fns";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { SelectedDayMealsCard } from "@/components/plans/selected-day-meals-card";
+import { WeekPlannerGrid } from "@/components/plans/week-planner-grid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fromDateKey, toDateKey } from "@/lib/date-keys";
 import { getWeekStart } from "@/lib/planner/week";
 import {
 	type PlanMeal,
@@ -16,12 +19,8 @@ import {
 	type WeekPlan,
 } from "@/lib/queries/plans";
 
-function slotLabel(type: PlanSlot["type"]) {
-	return type === "LUNCH" ? "Lunch" : "Dinner";
-}
-
 function getWeekStartParam(date: Date) {
-	return format(getWeekStart(date), "yyyy-MM-dd");
+	return toDateKey(getWeekStart(date));
 }
 
 function normalizeWeekStartParam(value: string | null | undefined) {
@@ -38,6 +37,7 @@ type WeekPlannerProps = {
 export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 	const [busySlotId, setBusySlotId] = useState<string | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
+	const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 	const currentWeekStartParam = getWeekStartParam(new Date());
 	const [weekStartParam, setWeekStartParam] = useState(() => {
 		return normalizeWeekStartParam(initialWeekStart) ?? currentWeekStartParam;
@@ -63,14 +63,38 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 		return Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
 	}, [weekStartDate]);
 
+	useEffect(() => {
+		const today = new Date();
+		const start = weekStartDate;
+		const end = addDays(weekStartDate, 6);
+		const nextSelected = isWithinInterval(today, { start, end })
+			? today
+			: weekStartDate;
+		const nextKey = toDateKey(nextSelected);
+		setSelectedDayKey((prev) => (prev === nextKey ? prev : nextKey));
+	}, [weekStartDate]);
+
 	const slotsByKey = useMemo(() => {
 		const map = new Map<string, PlanSlot>();
 		for (const slot of plan?.slots ?? []) {
-			const dateKey = slot.date.split("T")[0] ?? slot.date;
+			const dateKey = toDateKey(new Date(slot.date));
 			map.set(`${dateKey}:${slot.type}`, slot);
 		}
 		return map;
 	}, [plan]);
+
+	const selectedDate = useMemo(() => {
+		if (!selectedDayKey) return null;
+		const parsed = fromDateKey(selectedDayKey);
+		return Number.isNaN(parsed.getTime()) ? null : parsed;
+	}, [selectedDayKey]);
+
+	const selectedLunchSlot = selectedDayKey
+		? slotsByKey.get(`${selectedDayKey}:LUNCH`)
+		: undefined;
+	const selectedDinnerSlot = selectedDayKey
+		? slotsByKey.get(`${selectedDayKey}:DINNER`)
+		: undefined;
 
 	async function handleGenerate(force: boolean) {
 		setActionError(null);
@@ -239,77 +263,24 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 					</div>
 				) : null}
 
-				<div className="overflow-x-auto">
-					<table className="min-w-[48rem] w-full border-separate border-spacing-0">
-						<thead>
-							<tr>
-								<th className="sticky left-0 z-10 w-28 bg-card/80 px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground">
-									Slot
-								</th>
-								{days.map((day) => {
-									const dayKey = day.toISOString().split("T")[0] ?? "";
-									return (
-										<th
-											key={dayKey}
-											className="px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground"
-										>
-											<div>{format(day, "EEE")}</div>
-											<div className="text-[11px] tracking-[0.12em]">
-												{format(day, "MMM d")}
-											</div>
-										</th>
-									);
-								})}
-							</tr>
-						</thead>
-						<tbody>
-							{(["LUNCH", "DINNER"] as const).map((type) => (
-								<tr key={type}>
-									<td className="sticky left-0 z-10 bg-card/80 px-3 py-3 text-sm font-medium text-foreground">
-										{slotLabel(type)}
-									</td>
-									{days.map((day) => {
-										const dayKey = day.toISOString().split("T")[0] ?? "";
-										const key = `${dayKey}:${type}`;
-										const slot = slotsByKey.get(key);
-										return (
-											<td key={key} className="px-3 py-3 align-top">
-												{!slot ? (
-													<div className="text-xs text-muted-foreground">
-														{hasPlan ? "Missing slot" : "Not generated"}
-													</div>
-												) : (
-													<div className="space-y-1">
-														<select
-															className="w-full rounded-md border border-border bg-white px-2 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
-															value={slot.mealId ?? ""}
-															disabled={busySlotId === slot.id}
-															onChange={(event) =>
-																handleSlotChange(slot.id, event.target.value)
-															}
-														>
-															<option value="">Unassigned</option>
-															{meals.map((meal) => (
-																<option key={meal.id} value={meal.id}>
-																	{meal.name}
-																</option>
-															))}
-														</select>
-														{slot.overriddenAt ? (
-															<div className="text-[11px] text-muted-foreground">
-																Edited
-															</div>
-														) : null}
-													</div>
-												)}
-											</td>
-										);
-									})}
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+				<WeekPlannerGrid
+					days={days}
+					selectedDayKey={selectedDayKey}
+					setSelectedDayKey={setSelectedDayKey}
+					slotsByKey={slotsByKey}
+					meals={meals}
+					busySlotId={busySlotId}
+					hasPlan={hasPlan}
+					onSlotChange={handleSlotChange}
+				/>
+
+				{selectedDayKey ? (
+					<SelectedDayMealsCard
+						selectedDate={selectedDate}
+						selectedLunchSlot={selectedLunchSlot}
+						selectedDinnerSlot={selectedDinnerSlot}
+					/>
+				) : null}
 			</CardContent>
 		</Card>
 	);

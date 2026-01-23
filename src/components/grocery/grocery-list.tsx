@@ -1,15 +1,12 @@
 "use client";
 
-import { addWeeks, format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toDateKey } from "@/lib/date-keys";
-import { getWeekStart } from "@/lib/planner/week";
 import { useGroceryList } from "@/lib/queries/grocery";
 import { useGroceryUiStore } from "@/lib/stores/grocery-ui";
 
@@ -37,36 +34,16 @@ async function copyToClipboard(text: string) {
 	document.body.removeChild(textarea);
 }
 
-function getWeekStartParam(date: Date) {
-	return toDateKey(getWeekStart(date));
-}
-
 export function GroceryList() {
 	const [copyStatus, setCopyStatus] = useState<"idle" | "done" | "error">(
 		"idle",
 	);
 	const weekStart = useGroceryUiStore((state) => state.weekStart);
 	const weekRange = useGroceryUiStore((state) => state.weekRange);
-	const setWeekStart = useGroceryUiStore((state) => state.setWeekStart);
-	const currentWeekStartParam = getWeekStartParam(new Date());
 	const { data, isLoading, error } = useGroceryList(weekStart);
-
-	const weekStartDate = useMemo(
-		() => new Date(`${weekStart}T00:00:00`),
-		[weekStart],
-	);
 
 	const hasPlan = Boolean(data?.plan);
 	const items = data?.items ?? [];
-	const isCurrentWeek = weekStart === currentWeekStartParam;
-	const previousWeekParam = useMemo(
-		() => format(addWeeks(weekStartDate, -1), "yyyy-MM-dd"),
-		[weekStartDate],
-	);
-	const nextWeekParam = useMemo(
-		() => format(addWeeks(weekStartDate, 1), "yyyy-MM-dd"),
-		[weekStartDate],
-	);
 
 	async function handleCopy() {
 		if (items.length === 0) return;
@@ -126,27 +103,6 @@ export function GroceryList() {
 					<p className="text-sm text-muted-foreground">{weekRange}</p>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							onClick={() => setWeekStart(previousWeekParam)}
-						>
-							Prev week
-						</Button>
-						<Button
-							variant="outline"
-							onClick={() => setWeekStart(currentWeekStartParam)}
-							disabled={isCurrentWeek}
-						>
-							This week
-						</Button>
-						<Button
-							variant="outline"
-							onClick={() => setWeekStart(nextWeekParam)}
-						>
-							Next week
-						</Button>
-					</div>
 					<Button
 						onClick={handleCopy}
 						className="bg-primary text-primary-foreground"

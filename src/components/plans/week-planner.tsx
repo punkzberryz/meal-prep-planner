@@ -3,12 +3,30 @@
 import { addDays, addWeeks, format, isWithinInterval } from "date-fns";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { SelectedDayMealsCard } from "@/components/plans/selected-day-meals-card";
 import { WeekPlannerGrid } from "@/components/plans/week-planner-grid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import {
+	Drawer,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+} from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fromDateKey, toDateKey } from "@/lib/date-keys";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { getWeekStart } from "@/lib/planner/week";
 import {
 	type PlanMeal,
@@ -38,6 +56,8 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 	const [busySlotId, setBusySlotId] = useState<string | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
 	const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const isMobile = useMediaQuery("(max-width: 640px)");
 	const currentWeekStartParam = getWeekStartParam(new Date());
 	const [weekStartParam, setWeekStartParam] = useState(() => {
 		return normalizeWeekStartParam(initialWeekStart) ?? currentWeekStartParam;
@@ -103,7 +123,9 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 				weekStart: weekStartParam,
 				force,
 			});
+			toast.success("Plan updated.");
 		} catch (err) {
+			toast.error("Failed to generate plan.");
 			setActionError(
 				err instanceof Error ? err.message : "Failed to generate plan.",
 			);
@@ -132,7 +154,9 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 				slotId,
 				mealId: nextMealId === "" ? null : nextMealId,
 			});
+			toast.success("Meal updated.");
 		} catch (err) {
+			toast.error("Failed to update meal.");
 			setActionError(
 				err instanceof Error ? err.message : "Failed to update slot.",
 			);
@@ -218,9 +242,11 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 					<Button
 						disabled={!hasMeals || busyGenerate}
 						onClick={() => {
-							if (!window.confirm("Overwrite any overrides and regenerate?"))
+							if (!hasPlan) {
+								handleGenerate(true);
 								return;
-							handleGenerate(true);
+							}
+							setConfirmOpen(true);
 						}}
 						className="bg-primary text-primary-foreground hover:bg-primary/90"
 					>
@@ -228,6 +254,55 @@ export function WeekPlanner({ initialWeekStart }: WeekPlannerProps) {
 					</Button>
 				</div>
 			</CardHeader>
+			{isMobile ? (
+				<Drawer open={confirmOpen} onOpenChange={setConfirmOpen}>
+					<DrawerContent>
+						<DrawerHeader className="text-left">
+							<DrawerTitle>Regenerate this week?</DrawerTitle>
+							<DrawerDescription>
+								This will overwrite any manual edits you made for this week.
+							</DrawerDescription>
+						</DrawerHeader>
+						<DrawerFooter>
+							<Button
+								onClick={async () => {
+									setConfirmOpen(false);
+									await handleGenerate(true);
+								}}
+							>
+								Generate again
+							</Button>
+							<Button variant="outline" onClick={() => setConfirmOpen(false)}>
+								Cancel
+							</Button>
+						</DrawerFooter>
+					</DrawerContent>
+				</Drawer>
+			) : (
+				<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+					<DialogContent className="sm:max-w-[420px]">
+						<DialogHeader>
+							<DialogTitle>Regenerate this week?</DialogTitle>
+							<DialogDescription>
+								This will overwrite any manual edits you made for this week.
+							</DialogDescription>
+						</DialogHeader>
+						<DialogFooter className="gap-2 sm:gap-0">
+							<Button variant="outline" onClick={() => setConfirmOpen(false)}>
+								Cancel
+							</Button>
+							<Button
+								onClick={async () => {
+									setConfirmOpen(false);
+									await handleGenerate(true);
+								}}
+							>
+								Generate again
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+			)}
 
 			<CardContent className="space-y-4">
 				{combinedError ? (

@@ -37,6 +37,12 @@ function toMealResponse(meal: {
 		qty: string | null;
 		unit: string | null;
 	}>;
+	images: Array<{
+		id: string;
+		url: string;
+		position: number;
+		createdAt: Date;
+	}>;
 	mealTags: Array<{ tag: { id: string; value: string } }>;
 }) {
 	return {
@@ -44,6 +50,10 @@ function toMealResponse(meal: {
 		lastPlannedAt: meal.lastPlannedAt?.toISOString() ?? null,
 		createdAt: meal.createdAt.toISOString(),
 		updatedAt: meal.updatedAt.toISOString(),
+		images: meal.images.map((image) => ({
+			...image,
+			createdAt: image.createdAt.toISOString(),
+		})),
 		tags: meal.mealTags.map((mt) => mt.tag.value),
 	};
 }
@@ -77,6 +87,15 @@ export async function GET(
 					name: true,
 					qty: true,
 					unit: true,
+				},
+				orderBy: [{ position: "asc" }],
+			},
+			images: {
+				select: {
+					id: true,
+					url: true,
+					position: true,
+					createdAt: true,
 				},
 				orderBy: [{ position: "asc" }],
 			},
@@ -199,6 +218,15 @@ export async function PATCH(
 						name: true,
 						qty: true,
 						unit: true,
+					},
+					orderBy: [{ position: "asc" }],
+				},
+				images: {
+					select: {
+						id: true,
+						url: true,
+						position: true,
+						createdAt: true,
 					},
 					orderBy: [{ position: "asc" }],
 				},

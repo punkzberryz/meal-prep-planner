@@ -11,6 +11,14 @@ export type MealListItem = {
 	createdAt: string;
 	updatedAt: string;
 	tags: string[];
+	images: MealImage[];
+};
+
+export type MealImage = {
+	id: string;
+	url: string;
+	position: number;
+	createdAt: string;
 };
 
 export type MealIngredient = {
@@ -40,6 +48,14 @@ type MealsListResponse = {
 
 type MealDetailResponse = {
 	meal: MealDetail;
+};
+
+type MealImageResponse = {
+	image: MealImage;
+};
+
+type MealImagesResponse = {
+	images: MealImage[];
 };
 
 export function useMealsList() {
@@ -106,6 +122,65 @@ export function useDeleteMeal() {
 			}),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: queryKeys.meals.list });
+		},
+	});
+}
+
+export function useAddMealImage() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ mealId, url }: { mealId: string; url: string }) =>
+			apiJson<MealImageResponse>(`/api/meals/${mealId}/images`, {
+				method: "POST",
+				body: JSON.stringify({ url }),
+			}),
+		onSuccess: (_data, variables) => {
+			void queryClient.invalidateQueries({ queryKey: queryKeys.meals.list });
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.meals.detail(variables.mealId),
+			});
+		},
+	});
+}
+
+export function useReorderMealImages() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({
+			mealId,
+			orderedIds,
+		}: {
+			mealId: string;
+			orderedIds: string[];
+		}) =>
+			apiJson<MealImagesResponse>(`/api/meals/${mealId}/images`, {
+				method: "PATCH",
+				body: JSON.stringify({ orderedIds }),
+			}),
+		onSuccess: (_data, variables) => {
+			void queryClient.invalidateQueries({ queryKey: queryKeys.meals.list });
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.meals.detail(variables.mealId),
+			});
+		},
+	});
+}
+
+export function useDeleteMealImage() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ mealId, imageId }: { mealId: string; imageId: string }) =>
+			apiJson(`/api/meals/${mealId}/images/${imageId}`, {
+				method: "DELETE",
+			}),
+		onSuccess: (_data, variables) => {
+			void queryClient.invalidateQueries({ queryKey: queryKeys.meals.list });
+			void queryClient.invalidateQueries({
+				queryKey: queryKeys.meals.detail(variables.mealId),
+			});
 		},
 	});
 }

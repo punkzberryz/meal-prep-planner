@@ -37,6 +37,15 @@ export async function GET() {
 			lastPlannedAt: true,
 			createdAt: true,
 			updatedAt: true,
+			images: {
+				select: {
+					id: true,
+					url: true,
+					position: true,
+					createdAt: true,
+				},
+				orderBy: [{ position: "asc" }],
+			},
 			mealTags: { select: { tag: { select: { id: true, value: true } } } },
 		},
 		orderBy: [{ name: "asc" }],
@@ -48,6 +57,10 @@ export async function GET() {
 			lastPlannedAt: meal.lastPlannedAt?.toISOString() ?? null,
 			createdAt: meal.createdAt.toISOString(),
 			updatedAt: meal.updatedAt.toISOString(),
+			images: meal.images.map((image) => ({
+				...image,
+				createdAt: image.createdAt.toISOString(),
+			})),
 			tags: meal.mealTags.map((mt) => mt.tag.value),
 		})),
 	});
@@ -136,6 +149,15 @@ export async function POST(request: NextRequest) {
 					},
 					orderBy: [{ position: "asc" }],
 				},
+				images: {
+					select: {
+						id: true,
+						url: true,
+						position: true,
+						createdAt: true,
+					},
+					orderBy: [{ position: "asc" }],
+				},
 				mealTags: { select: { tag: { select: { id: true, value: true } } } },
 				createdAt: true,
 				updatedAt: true,
@@ -149,6 +171,10 @@ export async function POST(request: NextRequest) {
 			lastPlannedAt: created.lastPlannedAt?.toISOString() ?? null,
 			createdAt: created.createdAt.toISOString(),
 			updatedAt: created.updatedAt.toISOString(),
+			images: created.images.map((image) => ({
+				...image,
+				createdAt: image.createdAt.toISOString(),
+			})),
 			tags: created.mealTags.map((mt) => mt.tag.value),
 		},
 	});

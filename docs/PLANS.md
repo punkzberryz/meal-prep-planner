@@ -19,6 +19,7 @@
 
 1. Meal library enhancements
    - Optional: seed a small set of default meals (copy into user space).
+   - Optional meal images per meal (upload or URL) for richer library cards.
    - Meal tagging and search polish.
 
 2. Weekly planner enhancements

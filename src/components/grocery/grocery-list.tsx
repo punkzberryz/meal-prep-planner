@@ -4,6 +4,7 @@ import { addDays, format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,9 +55,11 @@ export function GroceryList() {
 		try {
 			await copyToClipboard(buildCopyText(items));
 			setCopyStatus("done");
+			toast.success("Grocery list copied.");
 			window.setTimeout(() => setCopyStatus("idle"), 1500);
 		} catch {
 			setCopyStatus("error");
+			toast.error("Copy failed.");
 			window.setTimeout(() => setCopyStatus("idle"), 1500);
 		}
 	}

@@ -3,8 +3,29 @@
 import { InfoIcon } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+	Drawer,
+	DrawerClose,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +34,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import {
 	type MealDetail,
 	useCreateMeal,
@@ -88,6 +110,17 @@ export function MealLibrary() {
 	const [servings, setServings] = useState<string>("");
 	const [ingredientsText, setIngredientsText] = useState("");
 	const [tagsText, setTagsText] = useState("");
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const isMobile = useMediaQuery("(max-width: 640px)");
+
+	const Root = isMobile ? Drawer : Dialog;
+	const Trigger = isMobile ? DrawerTrigger : DialogTrigger;
+	const Content = isMobile ? DrawerContent : DialogContent;
+	const Header = isMobile ? DrawerHeader : DialogHeader;
+	const Title = isMobile ? DrawerTitle : DialogTitle;
+	const Description = isMobile ? DrawerDescription : DialogDescription;
+	const Footer = isMobile ? DrawerFooter : DialogFooter;
+	const Close = isMobile ? DrawerClose : DialogClose;
 
 	const selectedLabel = useMemo(() => {
 		if (!selectedMealId) return "New meal";
@@ -150,27 +183,32 @@ export function MealLibrary() {
 				});
 				const createdOrUpdatedId = data.meal?.id as string | undefined;
 				if (createdOrUpdatedId) setSelectedMealId(createdOrUpdatedId);
+				toast.success("Meal updated.");
 				return;
 			}
 
 			const data = await createMeal.mutateAsync(payload);
 			const createdOrUpdatedId = data.meal?.id as string | undefined;
 			if (createdOrUpdatedId) setSelectedMealId(createdOrUpdatedId);
+			toast.success("Meal added.");
 		} catch (err) {
+			toast.error("Failed to save meal.");
 			setError(err instanceof Error ? err.message : "Failed to save meal.");
 		}
 	}
 
 	async function handleDelete() {
 		if (!selectedMealId) return;
-		if (!window.confirm("Delete this meal?")) return;
 
 		setError(null);
 		try {
 			await deleteMeal.mutateAsync(selectedMealId);
 			clearSelection();
 			hydrateForm(null);
+			setConfirmOpen(false);
+			toast.success("Meal deleted.");
 		} catch (err) {
+			toast.error("Failed to delete meal.");
 			setError(err instanceof Error ? err.message : "Failed to delete meal.");
 		}
 	}
@@ -263,13 +301,37 @@ export function MealLibrary() {
 						>
 							Save
 						</Button>
-						<Button
-							variant="outline"
-							onClick={handleDelete}
-							disabled={busy || !selectedMealId}
-						>
-							Delete
-						</Button>
+						<Root open={confirmOpen} onOpenChange={setConfirmOpen}>
+							<Trigger asChild>
+								<Button variant="outline" disabled={busy || !selectedMealId}>
+									Delete
+								</Button>
+							</Trigger>
+							<Content className="sm:max-w-[420px]">
+								<Header>
+									<Title>Delete this meal?</Title>
+									<Description>
+										This removes{" "}
+										<span className="font-medium text-foreground">
+											{selectedMeal?.name ?? "this meal"}
+										</span>{" "}
+										from your library. This cannot be undone.
+									</Description>
+								</Header>
+								<Footer className="gap-2 sm:gap-0">
+									<Close asChild>
+										<Button variant="outline">Cancel</Button>
+									</Close>
+									<Button
+										variant="destructive"
+										onClick={handleDelete}
+										disabled={busy || !selectedMealId}
+									>
+										Delete meal
+									</Button>
+								</Footer>
+							</Content>
+						</Root>
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-5">

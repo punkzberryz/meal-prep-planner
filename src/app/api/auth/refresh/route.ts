@@ -58,6 +58,8 @@ export async function POST() {
 			id: session.user.id,
 			email: session.user.email,
 			name: session.user.name,
+			createdAt: session.user.createdAt.toISOString(),
+			updatedAt: session.user.updatedAt.toISOString(),
 		},
 	});
 

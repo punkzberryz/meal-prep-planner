@@ -49,7 +49,13 @@ export async function POST(request: NextRequest) {
 
 	const token = signAuthToken({ sub: user.id, jti }, expiresAt);
 	const response = NextResponse.json({
-		user: { id: user.id, email: user.email, name: user.name },
+		user: {
+			id: user.id,
+			email: user.email,
+			name: user.name,
+			createdAt: user.createdAt.toISOString(),
+			updatedAt: user.updatedAt.toISOString(),
+		},
 	});
 
 	response.cookies.set(SESSION_COOKIE_NAME, token, {

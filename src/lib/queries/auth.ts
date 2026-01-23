@@ -6,6 +6,8 @@ export type AuthUser = {
 	id: string;
 	email: string;
 	name: string | null;
+	createdAt: string;
+	updatedAt: string;
 };
 
 type AuthMeResponse = {
@@ -21,6 +23,15 @@ type RegisterPayload = {
 	email: string;
 	password: string;
 	name?: string;
+};
+
+type UpdateProfilePayload = {
+	name: string | null;
+};
+
+type ChangePasswordPayload = {
+	currentPassword: string;
+	nextPassword: string;
 };
 
 export function useAuthMe() {
@@ -88,5 +99,39 @@ export function useLogout() {
 			apiJson("/api/auth/logout", {
 				method: "POST",
 			}),
+	});
+}
+
+export function useUpdateProfile() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (payload: UpdateProfilePayload) =>
+			apiJson<AuthMeResponse>("/api/auth/me", {
+				method: "PATCH",
+				body: JSON.stringify(payload),
+			}),
+		onSuccess: (data) => {
+			queryClient.setQueryData(queryKeys.auth.me, {
+				user: data.user ?? null,
+			});
+		},
+	});
+}
+
+export function useChangePassword() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (payload: ChangePasswordPayload) =>
+			apiJson<AuthMeResponse>("/api/auth/password", {
+				method: "POST",
+				body: JSON.stringify(payload),
+			}),
+		onSuccess: (data) => {
+			queryClient.setQueryData(queryKeys.auth.me, {
+				user: data.user ?? null,
+			});
+		},
 	});
 }

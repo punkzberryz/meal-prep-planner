@@ -32,6 +32,10 @@
 4. Cooking steps (v1)
    - Structured recipe steps with timers and servings.
 
+5. Settings (v1)
+   - Profile basics: display name, email (read-only).
+   - Account security: change password flow.
+
 ## Completed
 - Auth gating: protect `/app` routes and redirect if not signed in.
 - Auth-aware marketing flow: redirect signed-in users away from `/login` and `/register`, swap landing CTA to "Go to app".

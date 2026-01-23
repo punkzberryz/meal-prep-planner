@@ -132,9 +132,6 @@ export function MealLibrary() {
 		}>
 	>([]);
 	const isMobile = useMediaQuery("(max-width: 640px)");
-	const uploadClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-		null,
-	);
 	const prevSelectedMealIdRef = useRef<string | null>(null);
 
 	const Root = isMobile ? Drawer : Dialog;
@@ -190,10 +187,6 @@ export function MealLibrary() {
 		if (prevSelectedMealIdRef.current === selectedMealId) return;
 		prevSelectedMealIdRef.current = selectedMealId;
 		setUploadQueue([]);
-		if (uploadClearTimeoutRef.current) {
-			clearTimeout(uploadClearTimeoutRef.current);
-			uploadClearTimeoutRef.current = null;
-		}
 	}, [selectedMealId]);
 
 	async function handleSave() {
@@ -366,15 +359,9 @@ export function MealLibrary() {
 			toast.error("Failed to upload images.");
 		} finally {
 			setUploading(false);
-			if (uploadClearTimeoutRef.current) {
-				clearTimeout(uploadClearTimeoutRef.current);
-			}
-			uploadClearTimeoutRef.current = setTimeout(() => {
-				setUploadQueue((current) =>
-					current.filter((item) => item.status === "uploading"),
-				);
-				uploadClearTimeoutRef.current = null;
-			}, 1200);
+			setUploadQueue((current) =>
+				current.filter((item) => item.status === "uploading"),
+			);
 		}
 	}
 

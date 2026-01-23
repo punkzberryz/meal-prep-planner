@@ -1,4 +1,5 @@
 import { addWeeks, format } from "date-fns";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppPage } from "@/components/app/app-page";
 import { DashboardPageFallback } from "@/components/app/app-page-fallbacks";
@@ -13,6 +14,10 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getWeekStart } from "@/lib/planner/week";
+
+export const metadata: Metadata = {
+	title: "Dashboard",
+};
 
 export default function AppDashboardPage() {
 	const currentWeekStart = getWeekStart(new Date());

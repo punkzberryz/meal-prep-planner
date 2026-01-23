@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+	title: "Meal Prep Planner",
+};
 
 export default async function Home() {
 	const session = await getSession();

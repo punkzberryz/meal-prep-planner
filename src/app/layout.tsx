@@ -16,10 +16,13 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-	title: "Meal Prep Planner",
+	title: {
+		template: "%s | Meal Prep Planner",
+		default: "Meal Prep Planner",
+	},
 	description: "Plan weekly meals, manage groceries, and keep cooking calm.",
 	icons: {
-		icon: "/favicon.ico",
+		icon: "/assets/icons/icon.jpg",
 		shortcut: "/assets/icons/favicon.ico",
 		apple: "/assets/icons/icon.jpg",
 	},

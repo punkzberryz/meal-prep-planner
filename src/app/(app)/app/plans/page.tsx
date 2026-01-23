@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { AppPage } from "@/components/app/app-page";
 import { PlansPageFallback } from "@/components/app/app-page-fallbacks";
 import { WeekPlanner } from "@/components/plans/week-planner";
+
+export const metadata: Metadata = {
+	title: "Plans",
+};
 
 type PlansPageProps = {
 	searchParams?: { weekStart?: string } | Promise<{ weekStart?: string }>;
